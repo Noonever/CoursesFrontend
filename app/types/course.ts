@@ -11,16 +11,16 @@ interface Tag {
 }
 
 export interface CourseCard extends CourseBase {
-    description: string
+    description: string;
     tags: Tag[]
 }
 
-export interface CourseDemo extends CourseCard {
+export interface CourseDemo extends CourseBase {
     info: string;
     goal: string;
+    tags: Tag[]
 }
 
-export interface Course extends CourseCard {
+export interface Course extends CourseBase {
     chapters: Chapter[];
 }
-

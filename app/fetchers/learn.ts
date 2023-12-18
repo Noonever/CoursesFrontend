@@ -2,17 +2,17 @@ import client from "./client";
 import type { CourseProgression } from "~/types/courseProgression";
 
 export async function signUpForCourse(userId: string, courseId: string) {
-    const { data } = await client.post("/learn/sign-up-for-course", { userId, courseId });
+    const { data } = await client.post("/learn/sign-up", { userId, courseId });
     return data;
 }
 
 export async function getProgression(userId: string, courseId: string): Promise<CourseProgression> {
-    const { data } = await client.get("/learn/get-progression", { params: { userId, courseId } });
+    const { data } = await client.get("/learn/progression", { params: { userId, courseId } });
     return data;
 }
 
 export async function getProgressions(userId: string): Promise<CourseProgression[]> {
-    const { data } = await client.get("/learn/get-progressions", { params: { userId } });
+    const { data } = await client.get("/learn/progressions", { params: { userId } });
     return data;
 }
 
@@ -27,6 +27,6 @@ export async function setSubchapterCompleted(userId: string, courseId: string, s
 }
 
 export async function submitTest(testId: string, answers: number[]): Promise<boolean> {
-    const { data } = await client.post("/learn/verify-test", { testId, answers });
+    const { data } = await client.post("/learn/submit-test", { testId, answers });
     return data;
 }
