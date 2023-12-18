@@ -5,140 +5,21 @@ import { useLoaderData, useNavigate } from "@remix-run/react";
 
 import courseHeader1 from "~/media/img/zeros-ones.jpg";
 import courseHeader2 from "~/media/img/zeros-ones-2.jpg";
-import CourseCard from "~/types/course-card";
+import type { CourseCard } from "~/types/course";
+import { getCourseCards } from "~/fetchers/course";
 
 export function links() {
     return [{ rel: "stylesheet", href: styles }, { rel: "stylesheet", href: coursesStyles }];
 }
 
-export function loader(): { courseCards: CourseCard[], groupedTags: Record<string, string[]> } {
-    const groupedTags: Record<string, string[]> = {};
-    const loadedCourseCards: CourseCard[] = [
-        {
-            id: "course1",
-            title: "Introduction to Python",
-            description: "Learn Python from scratch",
-            tags: [
-                { groupName: "difficulty", value: "Beginner" },
-                { groupName: "language", value: "Python" }
-            ]
-        },
-        {
-            id: "course2",
-            title: "Advanced JavaScript",
-            description: "Deep dive into JavaScript quirks",
-            tags: [
-                { groupName: "difficulty", value: "Advanced" },
-                { groupName: "language", value: "JavaScript" }
-            ]
-        },
-        {
-            id: "course3",
-            title: "Data Structures in C++",
-            description: "Master data structures in C++",
-            tags: [
-                { groupName: "difficulty", value: "Intermediate" },
-                { groupName: "language", value: "C++" },
-                { groupName: "specification", value: "Data Structures" }
-            ]
-        },
-        {
-            id: "course4",
-            title: "Functional Programming in Scala",
-            description: "Functional paradigms in Scala",
-            tags: [
-                { groupName: "difficulty", value: "Intermediate" },
-                { groupName: "language", value: "Scala" },
-                { groupName: "language", value: "C++" }
-            ]
-        },
-        {
-            id: "course5",
-            title: "Web Development with React",
-            description: "Build web applications using React",
-            tags: [
-                { groupName: "difficulty", value: "Beginner" },
-                { groupName: "language", value: "React" }
-            ]
-        },
-        {
-            id: "course6",
-            title: "Machine Learning with TensorFlow",
-            description: "Implement ML models with TensorFlow",
-            tags: [
-                { groupName: "difficulty", value: "Advanced" },
-                { groupName: "language", value: "Python" },
-                { groupName: "specification", value: "Machine Learning" }
-            ]
-        },
-        {
-            id: "course7",
-            title: "Rust for Systems Programming",
-            description: "Systems programming with Rust language",
-            tags: [
-                { groupName: "difficulty", value: "Intermediate" },
-                { groupName: "language", value: "Rust" }, { groupName: "language", value: "C++" }
-            ]
-        },
-        {
-            id: "course8",
-            title: "Algorithms in Java",
-            description: "Algorithmic problem solving in Java",
-            tags: [
-                { groupName: "difficulty", value: "Intermediate" },
-                { groupName: "language", value: "Java" },
-                { groupName: "specification", value: "Algorithms" }
-            ]
-        },
-        {
-            id: "course9",
-            title: "Frontend Development with Angular",
-            description: "Frontend development using Angular framework",
-            tags: [
-                { groupName: "difficulty", value: "Beginner" },
-                { groupName: "language", value: "Angular" }
-            ]
-        },
-        {
-            id: "course10",
-            title: "Backend Development with Django",
-            description: "Create robust backends with Django",
-            tags: [
-                { groupName: "difficulty", value: "Intermediate" },
-                { groupName: "language", value: "Python" },
-                { groupName: "specification", value: "Backend Development" }
-            ]
-        },
-        {
-            id: "course11",
-            title: "Cloud Computing with AWS",
-            description: "Deploy applications on AWS cloud platform",
-            tags: [
-                { groupName: "difficulty", value: "Advanced" },
-                { groupName: "specification", value: "Cloud Computing" }
-            ]
-        }
-    ];
-
-    loadedCourseCards.forEach(courseCard => {
-        courseCard.tags.forEach(tag => {
-            if (!groupedTags[tag.groupName]) {
-                groupedTags[tag.groupName] = [];
-            }
-            if (!groupedTags[tag.groupName].includes(tag.value)) {
-                groupedTags[tag.groupName].push(tag.value);
-            }
-        });
-    });
-
-    console.log(groupedTags);
-
-    return { courseCards: loadedCourseCards, groupedTags: groupedTags };
+export async function loader(): Promise<{ courseCards: CourseCard[]}> {
+    const courseCards = await getCourseCards();
+    return { courseCards };
 }
 
 export default function Index() {
     const navigate = useNavigate();
-    const { courseCards, groupedTags } = useLoaderData<typeof loader>();
+    const { courseCards } = useLoaderData<typeof loader>();
 
     function splitCourseCardsIntoRows(courseCards: CourseCard[], rowSize: number) {
         const result = [];

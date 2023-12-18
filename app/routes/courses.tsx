@@ -5,6 +5,7 @@ import type { LinksFunction } from "@remix-run/node";
 import Checkbox from "~/components/checkbox";
 
 import type { CourseCard } from "~/types/course";
+import { getCourseCards } from "~/fetchers/course";
 
 import styles from "~/styles/courses.css";
 import courseHeader1 from "~/media/img/zeros-ones.jpg";
@@ -15,117 +16,11 @@ export const links: LinksFunction = () => {
     return [{ rel: "stylesheet", href: styles }];
 }
 
-
-export function loader(): { courseCards: CourseCard[], groupedTags: Record<string, string[]> } {
+export async function loader(): Promise<{ courseCards: CourseCard[], groupedTags: Record<string, string[]>}> {
     const groupedTags: Record<string, string[]> = {};
-    const loadedCourseCards: CourseCard[] = [
-        {
-            id: "course1",
-            title: "Introduction to Python",
-            description: "Learn Python from scratch",
-            tags: [
-                { groupName: "difficulty", value: "Beginner" },
-                { groupName: "language", value: "Python" }
-            ]
-        },
-        {
-            id: "course2",
-            title: "Advanced JavaScript",
-            description: "Deep dive into JavaScript quirks",
-            tags: [
-                { groupName: "difficulty", value: "Advanced" },
-                { groupName: "language", value: "JavaScript" }
-            ]
-        },
-        {
-            id: "course3",
-            title: "Data Structures in C++",
-            description: "Master data structures in C++",
-            tags: [
-                { groupName: "difficulty", value: "Intermediate" },
-                { groupName: "language", value: "C++" },
-                { groupName: "specification", value: "Data Structures" }
-            ]
-        },
-        {
-            id: "course4",
-            title: "Functional Programming in Scala",
-            description: "Functional paradigms in Scala",
-            tags: [
-                { groupName: "difficulty", value: "Intermediate" },
-                { groupName: "language", value: "Scala" },
-                { groupName: "language", value: "C++" }
-            ]
-        },
-        {
-            id: "course5",
-            title: "Web Development with React",
-            description: "Build web applications using React",
-            tags: [
-                { groupName: "difficulty", value: "Beginner" },
-                { groupName: "language", value: "React" }
-            ]
-        },
-        {
-            id: "course6",
-            title: "Machine Learning with TensorFlow",
-            description: "Implement ML models with TensorFlow",
-            tags: [
-                { groupName: "difficulty", value: "Advanced" },
-                { groupName: "language", value: "Python" },
-                { groupName: "specification", value: "Machine Learning" }
-            ]
-        },
-        {
-            id: "course7",
-            title: "Rust for Systems Programming",
-            description: "Systems programming with Rust language",
-            tags: [
-                { groupName: "difficulty", value: "Intermediate" },
-                { groupName: "language", value: "Rust" }, { groupName: "language", value: "C++" }
-            ]
-        },
-        {
-            id: "course8",
-            title: "Algorithms in Java",
-            description: "Algorithmic problem solving in Java",
-            tags: [
-                { groupName: "difficulty", value: "Intermediate" },
-                { groupName: "language", value: "Java" },
-                { groupName: "specification", value: "Algorithms" }
-            ]
-        },
-        {
-            id: "course9",
-            title: "Frontend Development with Angular",
-            description: "Frontend development using Angular framework",
-            tags: [
-                { groupName: "difficulty", value: "Beginner" },
-                { groupName: "language", value: "Angular" }
-            ]
-        },
-        {
-            id: "course10",
-            title: "Backend Development with Django",
-            description: "Create robust backends with Django",
-            tags: [
-                { groupName: "difficulty", value: "Intermediate" },
-                { groupName: "language", value: "Python" },
-                { groupName: "specification", value: "Backend Development" }
-            ]
-        },
-        {
-            id: "course11",
-            title: "Cloud Computing with AWS",
-            description: "Deploy applications on AWS cloud platform",
-            tags: [
-                { groupName: "difficulty", value: "Advanced" },
-                { groupName: "specification", value: "Cloud Computing" }
-            ]
-        }
-    ];
+    const courseCards = await getCourseCards();
 
-    loadedCourseCards.forEach(courseCard => {
+    courseCards.forEach(courseCard => {
         courseCard.tags.forEach(tag => {
             if (!groupedTags[tag.groupName]) {
                 groupedTags[tag.groupName] = [];
@@ -135,12 +30,8 @@ export function loader(): { courseCards: CourseCard[], groupedTags: Record<strin
             }
         });
     });
-
-    console.log(groupedTags);
-
-    return { courseCards: loadedCourseCards, groupedTags: groupedTags };
+    return { courseCards, groupedTags };
 }
-
 
 export default function Courses() {
     const navigate = useNavigate();
