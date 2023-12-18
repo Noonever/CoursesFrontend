@@ -1,4 +1,4 @@
-import type { LinksFunction } from "@remix-run/node";
+import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
 import {
     Links,
     LiveReload,
@@ -7,9 +7,12 @@ import {
     Outlet,
     Scripts,
     ScrollRestoration,
+    useLoaderData,
 } from "@remix-run/react";
 
 import styles from "./root-styles.css";
+import { getUser } from "./utils/session.server";
+import { User } from "./types/user";
 
 
 const homeSvg = (strokeColor: string) => {
@@ -79,7 +82,17 @@ export const links: LinksFunction = () => {
 
 const svgActiveColor = "rgba(213, 69, 75, 0.9)";
 
+export async function loader({ request }: LoaderFunctionArgs): Promise<User | null> {
+    const user = await getUser(request);
+    return user;
+}
+
 export default function App() {
+    const user = useLoaderData<typeof loader>();
+    function handleLogin() {
+        window.location.href = 'http://localhost:8080/oauth/google_login'; // URL to your FastAPI rout
+    }
+
     return (
         <html lang="en" style={{ fontFamily: "'Sora', sans-serif", lineHeight: "1.8" }}>
             <head>
@@ -117,6 +130,17 @@ export default function App() {
                                 </div>
                             )}
                         </NavLink>
+                        {user ? (
+                            <div className="user-container">
+                                <span className="user-name">{JSON.stringify(user)}</span>
+                            </div>
+                        ) : (
+                            <div className="login-container">
+                                <button onClick={handleLogin} className="login-button">
+                                    login
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
 
