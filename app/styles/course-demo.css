@@ -1,0 +1,62 @@
+.course-header {
+    margin-top: 50px;
+}
+
+.course-title {
+    margin-top: 70px;
+    font-size: 40px;
+    font-weight: 200;
+}
+
+.course-tag {
+    font-size: 20px;
+    font-weight: 100;
+}
+.course-controls {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: row;
+    gap: 50px;
+}
+
+.course-control {
+    padding: 15px;
+    min-width: 160px;
+    border-radius: 7px;
+    font-size: large;
+    color: white;
+    border: none;
+    cursor: pointer;
+    box-shadow: 4px 4px 25px 9px rgba(34, 60, 80, 0.2);
+    font-weight: 700;
+}
+
+
+
+#learn {
+    background-color:rgb(232, 128, 128);
+}
+
+
+#learn:hover {
+    background-color: rgba(213, 69, 75, 0.7);
+}
+
+#exclude {
+    background-color: rgba(253, 255, 188, 0);
+    color: rgba(213, 69, 75, 0.7);
+    border: 3px solid rgba(213, 69, 75, 0.7);
+    
+}
+
+/* #exclude:hover {
+    background-color: rgb(255, 120, 120);
+} */
+
+.info-container {
+    margin-top: 30px;
+    background-color: white;
+    padding: 20px;
+    border-radius: 3px;
+    box-shadow: 4px 4px 25px 9px rgba(34, 60, 80, 0.2);
+}

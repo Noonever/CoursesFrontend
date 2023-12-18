@@ -1,0 +1,130 @@
+.progression-wrapper{
+
+}
+
+.progression {
+    box-shadow: 4px 4px 25px 9px rgba(34, 60, 80, 0.2);
+    margin-top: 40px;
+    display: flex;
+    flex-direction: row;
+    border-radius: 10px;
+    overflow: hidden;
+    padding: 20px;
+    min-height: max-content;
+    background-color: white;
+}
+
+.progression-image-container {
+    background-color: rgb(255, 120, 108);
+}
+
+
+.progression-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2vh;
+    padding: 20px;
+    height: 100%;
+    width: 100%;
+    min-height: max-content;
+}
+
+.course-title {
+    font-size: 25px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.course-title:hover {
+    color: rgb(255, 120, 108);
+}
+
+.course-tags {
+    font-size: 16px;
+    font-weight: 300;
+    color: rgb(255, 120, 108);
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+}
+
+.course-tag {
+    cursor: pointer;
+}
+
+.course-tag:hover {
+    color: rgb(255, 21, 0);
+}
+
+.progress-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 20px;
+    align-items: center;
+    height: 3vh;
+    min-height: max-content;
+    width: 100%;
+}
+
+.progress-text {
+    white-space: nowrap;
+    overflow: hidden;
+    display: block;
+    text-overflow: ellipsis;
+}
+
+.progress-bar-container {
+    background-color: rgb(212, 212, 212);
+    height: 30%;
+    border-radius: 100px;
+    overflow: hidden;
+    width: 70%;
+    box-shadow: 4px 4px 25px 9px rgba(34, 60, 80, 0.064);
+}
+
+.progress-bar {
+    background-color: rgb(255, 120, 108);
+    border-radius: 100px;
+    height: 100%;
+}
+
+.buttons {
+    width: 20%;
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    min-height: 30px;
+}
+
+.button {
+    white-space: nowrap;
+    overflow: hidden;
+    display: block;
+    text-overflow: ellipsis;
+    width: 48%;
+    border-radius: 5px;
+    min-height: 30px;
+    cursor: pointer;
+}
+
+.exclude {
+    border: 2px solid rgb(255, 120, 108);
+    background-color: rgba(255, 255, 255, 0);
+}
+
+.exclude:hover {
+    background-color: rgb(255, 220, 217);
+}
+
+.learn {
+    border: none;
+    background-color: rgb(255, 120, 108);
+    color: white;
+}
+
+.learn:hover {
+    box-shadow: 0px 0px 10px 3px rgb(255, 120, 108);
+}

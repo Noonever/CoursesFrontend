@@ -1,0 +1,112 @@
+div.filter-container {
+    display: flex;
+    flex-direction: column;
+    width: 13%;
+    height: 100%;
+    background-color: white;
+    padding: 20px;
+    padding-top: 10px;
+    user-select: none;
+    min-width: max-content;
+    border-radius: 5px;
+    box-shadow: 4px 4px 25px 9px rgba(34, 60, 80, 0.2);
+}
+
+div.course-cards-container {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    width: 85%;
+}
+
+div.course-cards-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 2%;
+}
+
+div.card-container {
+    background-color: white;
+    width: 18%;
+    height: 30vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 4px 4px 25px 9px rgba(34, 60, 80, 0.2);
+    user-select: none;
+    cursor: pointer;
+}
+
+div.card-container:hover {
+    transform: scale(1.05);
+}
+
+div.card-header-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 20%;
+    background-size: cover;
+}
+
+div.card-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 10px;
+}
+
+div.card-body {
+    padding: 20px;
+}
+
+.card-title-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.card-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: black;
+}
+
+.card-tags{
+    margin-top: 10px;
+}
+
+.card-tag {
+    font-size: 12px;
+    font-weight: 300;
+    color: rgb(255, 120, 108);
+}
+
+.card-description-container {
+    margin-top: 10px;
+}
+
+.filter-title {
+    font-size: 20px;
+    font-weight: 500;
+}
+
+.filter-label {
+    font-size: 18px;
+    font-weight: 500;
+    margin-top: 25px;
+}
+
+.filter {
+    cursor: pointer;
+    margin-top: 5px;
+    display: flex;
+    flex-direction: row;
+    gap: 0.5vw;
+    align-items: center;
+    width: max-content;
+}
+
+.filter:hover {
+    transform: scale(1.05);
+}
