@@ -103,15 +103,20 @@ export default function Courses() {
         const courseCards = filterCourses();
         const chunkedCourseCards = splitCourseCardsIntoRows(courseCards, 5);
         console.log(chunkedCourseCards);
+        const cards = chunkedCourseCards.map((chunk, index) => (
+            <div className="course-cards-row" key={index}>
+                {chunk.map((courseCard, index) => (
+                    renderCourseCard(courseCard, index)
+                ))}
+            </div>
+        ))
         return (
             <div className="course-cards-container">
-                {chunkedCourseCards.map((chunk, index) => (
-                    <div className="course-cards-row" key={index}>
-                        {chunk.map((courseCard, index) => (
-                            renderCourseCard(courseCard, index)
-                        ))}
+                {cards.length? cards : (
+                    <div style={{height: "20vh", width: "100%", display: "flex", justifyContent: "center", alignItems: "center"}}>
+                        <span style={{textAlign: "center", fontSize: "30px"}}>No courses found</span>
                     </div>
-                ))}
+                )}
             </div>
         )
     }
@@ -140,7 +145,7 @@ export default function Courses() {
             <span className="section-title">Courses</span>
             <div className="search">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className="">
-                    <path fill-rule="evenodd" d="M17.32 15.906 21.414 20 20 21.414l-4.094-4.094a8 8 0 1 1 1.414-1.414zM11 17a6 6 0 1 0 0-12 6 6 0 0 0 0 12z"></path>
+                    <path fillRule="evenodd" d="M17.32 15.906 21.414 20 20 21.414l-4.094-4.094a8 8 0 1 1 1.414-1.414zM11 17a6 6 0 1 0 0-12 6 6 0 0 0 0 12z"></path>
                 </svg>
                 <input value={searchText} onChange={e => setSearchText(e.target.value)} className="search" type="text" placeholder="Search" />
             </div>

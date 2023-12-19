@@ -12,7 +12,6 @@ export interface CompareTestData {
 }
 
 export interface Test {
-    id: string;
     question: string;
     type: "select-one" | "select-many" | "compare";
     data: SelectTestData | CompareTestData;

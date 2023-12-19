@@ -6,6 +6,11 @@ export async function signUpForCourse(userId: string, courseId: string) {
     return data;
 }
 
+export async function leaveCourse(userId: string, courseId: string) {
+    const { data } = await client.post("/learn/sign-out", { userId, courseId });
+    return data;
+}
+
 export async function getProgression(userId: string, courseId: string): Promise<CourseProgression> {
     const { data } = await client.get("/learn/progression", { params: { userId, courseId } });
     return data;
@@ -26,7 +31,7 @@ export async function setSubchapterCompleted(userId: string, courseId: string, s
     return data;
 }
 
-export async function submitTest(testId: string, answers: number[]): Promise<boolean> {
-    const { data } = await client.post("/learn/submit-test", { testId, answers });
-    return data;
+export async function submitTest(courseId: string, subChapterId: number, answers: number[]): Promise<boolean> {
+    const { data } = await client.post("/learn/submit-test", { courseId, subChapterId, answers });
+    return data.result;
 }

@@ -6,7 +6,7 @@ import { getCourseDemo } from "~/fetchers/course";
 
 import styles from "~/styles/course-demo.css";
 import { requireUserId } from "~/utils/session.server";
-import { signUpForCourse } from "~/fetchers/learn";
+import { leaveCourse, signUpForCourse } from "~/fetchers/learn";
 
 export function links() {
     return [{ rel: "stylesheet", href: styles }];
@@ -33,8 +33,8 @@ export default function Course() {
         navigate("/learn/" + courseDemo.id);
     }
 
-    function handleExcludeClick() {
-        navigate("/exclude/" + courseDemo.id);
+    async function handleExcludeClick() {
+        await leaveCourse(userId, courseDemo.id);
     }
 
     return (

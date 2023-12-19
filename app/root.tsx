@@ -12,13 +12,13 @@ import {
 
 import styles from "./root-styles.css";
 import { getUser } from "./utils/session.server";
-import { User } from "./types/user";
+import type { User } from "./types/user";
 
 
 const homeSvg = (strokeColor: string) => {
     return (
         <svg width="32px" height="32px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M14 20V14C14 12.8954 13.1046 12 12 12C10.8954 12 10 12.8954 10 14V20M10.9833 3.60011L4.98335 7.14177C4.37395 7.50149 4 8.15646 4 8.8641V18C4 19.1046 4.89543 20 6 20H18C19.1046 20 20 19.1046 20 18V8.8641C20 8.15646 19.6261 7.50149 19.0167 7.14177L13.0167 3.60011C12.3894 3.22988 11.6106 3.22988 10.9833 3.60011Z" stroke={strokeColor ? strokeColor : "black"} stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M14 20V14C14 12.8954 13.1046 12 12 12C10.8954 12 10 12.8954 10 14V20M10.9833 3.60011L4.98335 7.14177C4.37395 7.50149 4 8.15646 4 8.8641V18C4 19.1046 4.89543 20 6 20H18C19.1046 20 20 19.1046 20 18V8.8641C20 8.15646 19.6261 7.50149 19.0167 7.14177L13.0167 3.60011C12.3894 3.22988 11.6106 3.22988 10.9833 3.60011Z" stroke={strokeColor ? strokeColor : "black"} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
     )
 }
@@ -27,7 +27,7 @@ const homeSvg = (strokeColor: string) => {
 const openedBookSvg = (strokeColor: string) => {
     return (
         <svg width="32px" height="32px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M5 19V6.2C5 5.0799 5 4.51984 5.21799 4.09202C5.40973 3.71569 5.71569 3.40973 6.09202 3.21799C6.51984 3 7.0799 3 8.2 3H15.8C16.9201 3 17.4802 3 17.908 3.21799C18.2843 3.40973 18.5903 3.71569 18.782 4.09202C19 4.51984 19 5.0799 19 6.2V17H7C5.89543 17 5 17.8954 5 19ZM5 19C5 20.1046 5.89543 21 7 21H19M18 17V21M15 13.5C14.7164 12.3589 13.481 11.5 12 11.5C10.519 11.5 9.28364 12.3589 9 13.5M12 7.5H12.01M13 7.5C13 8.05228 12.5523 8.5 12 8.5C11.4477 8.5 11 8.05228 11 7.5C11 6.94772 11.4477 6.5 12 6.5C12.5523 6.5 13 6.94772 13 7.5Z" stroke={strokeColor ? strokeColor : "black"} stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M5 19V6.2C5 5.0799 5 4.51984 5.21799 4.09202C5.40973 3.71569 5.71569 3.40973 6.09202 3.21799C6.51984 3 7.0799 3 8.2 3H15.8C16.9201 3 17.4802 3 17.908 3.21799C18.2843 3.40973 18.5903 3.71569 18.782 4.09202C19 4.51984 19 5.0799 19 6.2V17H7C5.89543 17 5 17.8954 5 19ZM5 19C5 20.1046 5.89543 21 7 21H19M18 17V21M15 13.5C14.7164 12.3589 13.481 11.5 12 11.5C10.519 11.5 9.28364 12.3589 9 13.5M12 7.5H12.01M13 7.5C13 8.05228 12.5523 8.5 12 8.5C11.4477 8.5 11 8.05228 11 7.5C11 6.94772 11.4477 6.5 12 6.5C12.5523 6.5 13 6.94772 13 7.5Z" stroke={strokeColor ? strokeColor : "black"} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
     )
 }
@@ -102,43 +102,47 @@ export default function App() {
                 <Links />
             </head>
             <body>
-                <div className="navbar-container">
-                    <div className="navbar">
-                        <NavLink to="/">
-                            {({ isActive, isPending }) => (
-                                <div className={isActive ? "nav-button-container active" : "nav-button-container"}>
-                                    {homeSvg(isActive ? svgActiveColor : "black")}
-                                    <span className="nav-button">Home</span>
-                                </div>
-                            )}
-                        </NavLink>
+                <div className="sidebar">
+                    <div className="sidebar-upper">
+                        <div className="navbar">
+                            <NavLink to="/">
+                                {({ isActive, isPending }) => (
+                                    <div className={isActive ? "nav-button-container active" : "nav-button-container"}>
+                                        {homeSvg(isActive ? svgActiveColor : "black")}
+                                        <span className="nav-button">Home</span>
+                                    </div>
+                                )}
+                            </NavLink>
 
-                        <NavLink to="/my-learning">
-                            {({ isActive, isPending }) => (
-                                <div className={isActive ? "nav-button-container active" : "nav-button-container"}>
-                                    {openedBookSvg(isActive ? svgActiveColor : "black")}
-                                    <span className="nav-button">My learning</span>
-                                </div>
-                            )}
-                        </NavLink>
+                            <NavLink to="/my-learning">
+                                {({ isActive, isPending }) => (
+                                    <div className={isActive ? "nav-button-container active" : "nav-button-container"}>
+                                        {openedBookSvg(isActive ? svgActiveColor : "black")}
+                                        <span className="nav-button">My learning</span>
+                                    </div>
+                                )}
+                            </NavLink>
 
-                        <NavLink to="/courses">
-                            {({ isActive, isPending }) => (
-                                <div className={isActive ? "nav-button-container active" : "nav-button-container"}>
-                                    {booksSvg(isActive ? svgActiveColor : "black")}
-                                    <span className="nav-button">Courses</span>
-                                </div>
-                            )}
-                        </NavLink>
+                            <NavLink to="/courses">
+                                {({ isActive, isPending }) => (
+                                    <div className={isActive ? "nav-button-container active" : "nav-button-container"}>
+                                        {booksSvg(isActive ? svgActiveColor : "black")}
+                                        <span className="nav-button">Courses</span>
+                                    </div>
+                                )}
+                            </NavLink>
+                        </div>
+                    </div>
+                    <div className="sidebar-lower">
                         {user ? (
-                            <div className="user-container">
-                                <span className="user-name">{JSON.stringify(user)}</span>
+                            <div className="user">
+                                <span className="user-name">{user.firstName}</span>
                             </div>
                         ) : (
                             <div className="login-container">
-                                <button onClick={handleLogin} className="login-button">
-                                    login
-                                </button>
+                                <div onClick={handleLogin} className="login">
+                                    Log In
+                                </div>
                             </div>
                         )}
                     </div>

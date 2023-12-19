@@ -5,13 +5,15 @@ import styles from "~/styles/my-learning.css";
 import { useLoaderData, useNavigate } from "@remix-run/react";
 import { getProgressions } from "~/fetchers/learn";
 import { getCourseCards } from "~/fetchers/course";
+import { requireUserId } from "~/utils/session.server";
+import { LoaderFunctionArgs } from "@remix-run/node";
 
 export function links() {
     return [{ rel: "stylesheet", href: styles }];
 }
 
-export async function loader(): Promise<{ userId: string, data: { courseCard: CourseCard, percentage: number }[] }> {
-    const userId = "0";
+export async function loader({request}: LoaderFunctionArgs): Promise<{ userId: string, data: { courseCard: CourseCard, percentage: number }[] }> {
+    const userId = await requireUserId(request);
     const courseProgressions = await getProgressions(userId);
     const userCoursesIds = courseProgressions.map((progression) => progression.courseId);
     const userCourseCards = await getCourseCards(userCoursesIds);

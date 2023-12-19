@@ -20,7 +20,7 @@ export async function getCourseCards(ids?: string[]): Promise<CourseCard[]> {
     }
 }
 
-export async function getCourseDemo(id: string, userId: string): Promise<{ preview: CourseDemo, isStudying: boolean }> {
-    const { data } = await client.get(`/course/demo`, { params: { id, userId } });
+export async function getCourseDemo(courseId: string, userId: string): Promise<{ preview: CourseDemo, isStudying: boolean }> {
+    const { data } = await client.get(`/course/demo`, { params: { courseId, userId } });
     return data;
 }

@@ -11,18 +11,22 @@ import checkboxStyles from "~/styles/cool-checkbox.css";
 
 import { getProgression, submitTest, setLastViewedSubchapter, setSubchapterCompleted } from "~/fetchers/learn";
 import { getCourse } from "~/fetchers/course";
+import { requireUserId } from "~/utils/session.server";
 
 export function links() {
     return [{ rel: "stylesheet", href: styles }, { rel: "stylesheet", href: checkboxStyles }];
 }
 
-export async function loader(request: LoaderFunctionArgs): Promise<{userId: string, course: Course, progression: CourseProgression }> {
-    const userId = "0";
-    const courseId = request.params.courseId
+export async function loader({request}: LoaderFunctionArgs): Promise<{userId: string, course: Course, progression: CourseProgression }> {
+    const userId = await requireUserId(request);
+    const courseId = request.url.split('/').pop();
     if (!courseId) {
         throw new Error("Course ID is required")
     }
     const course = await getCourse(courseId);
+    if (course === null) {
+        throw new Error("Course not found")
+    }
     const progression = await getProgression(userId, courseId);
     return { userId, course, progression };
 }
@@ -126,13 +130,11 @@ export default function Learn() {
             // Render test
         } else if (currentSubchapterType === 'test') {
             const data = currentSubchapter.data as Test;
-            const testId = data.id;
             const testType = data.type;
             let testSection = <></>
 
-            async function sendAnswer(answer: any) {
-                console.log(`Sending answers for test ${testId}: ${answer}`);
-                const response = await submitTest(testId, answer);
+            async function sendAnswer(answer: number[]) {
+                const response = await submitTest(course.id, currentSubchapter.index, answer);
                 if (response) {
                     await setSubchapterCompleted( userId, course.id, currentSubchapter.index );
                 }
@@ -157,7 +159,7 @@ export default function Learn() {
                         </div>
                         <div className="test-submit">
                             <button className="test-submit-button" onClick={() => {
-                                sendAnswer(selectedSelectOneTestAnswerId);
+                                sendAnswer([selectedSelectOneTestAnswerId]);
                             }}>Отправить</button>
                         </div>
                     </div>
