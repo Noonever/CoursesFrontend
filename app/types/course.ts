@@ -12,6 +12,7 @@ interface Tag {
 
 export interface CourseCard extends CourseBase {
     description: string;
+    totalSubchapters: number;
     tags: Tag[]
 }
 

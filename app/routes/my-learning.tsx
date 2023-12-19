@@ -12,17 +12,18 @@ export function links() {
     return [{ rel: "stylesheet", href: styles }];
 }
 
-export async function loader({request}: LoaderFunctionArgs): Promise<{ userId: string, data: { courseCard: CourseCard, percentage: number }[] }> {
+export async function loader({request}: LoaderFunctionArgs): Promise<{ userId: string, data: { courseCard: CourseCard }[] }> {
     const userId = await requireUserId(request);
     const courseProgressions = await getProgressions(userId);
     if (courseProgressions.length === 0) {
         return { userId, data: [] };
     }
+
     const userCoursesIds = courseProgressions.map((progression) => progression.courseId);
     const userCourseCards = await getCourseCards(userCoursesIds);
     const mergedData = userCourseCards.map(courseCard => {
         const progression = courseProgressions.find(progression => progression.courseId === courseCard.id);
-        const percentage = progression ? progression.completedSubchapters.length / progression.totalChapters : 0;
+        const percentage = progression ? progression.completedSubchapters.length / courseCard.totalSubchapters : 0;
         return { courseCard, percentage };
     });
     return { userId, data: mergedData };
