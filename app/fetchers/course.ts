@@ -13,7 +13,9 @@ export async function getCourse(id: string): Promise<Course | null> {
 
 export async function getCourseCards(ids?: string[]): Promise<CourseCard[]> {
     try {
-        const { data } = await client.get("/course/cards", { params: { ids } });
+        const { data } = await client.get("/course/cards", { params: { 
+            ids: ids?.join(",")
+         } });
         return data.items;
     } catch (error) {
         return []
