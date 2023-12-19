@@ -29,6 +29,7 @@ export async function loader(request: LoaderFunctionArgs): Promise<{userId: stri
 
 export default function Learn() {
     const { userId, course, progression } = useLoaderData<typeof loader>();
+    const completedSubchapters = progression.completedSubchapters;
     const [expandedChapterIds, setExpandedChapterIds] = useState<number[]>([0]);
     const [currentSubChapterId, setCurrentSubChapterId] = useState<number>(progression.lastViewedSubchapter ?? 0);
     const [selectedSelectOneTestAnswerId, setSelectedSelectOneTestAnswerId] = useState<number>(0);
@@ -42,7 +43,6 @@ export default function Learn() {
         return <p>Subchapter not found</p>;
     }
     const currentSubchapterType = currentSubchapter.type;
-
     const lastSubchapterIndex = course.chapters[course.chapters.length - 1].subChapters[course.chapters[course.chapters.length - 1].subChapters.length - 1].index;
 
     function flushSelectedAnswers() {
@@ -55,9 +55,12 @@ export default function Learn() {
     const handleChangeSubChapter = async (subChapterId: number) => {
         setTransition(true); // Begin fade-out
         flushSelectedAnswers();
-        const response = await setLastViewedSubchapter(userId, course.id, subChapterId);
+        await setLastViewedSubchapter(userId, course.id, subChapterId);
         if (currentSubchapterType !== 'test') {
             await setSubchapterCompleted(userId, course.id, subChapterId);
+            if (!completedSubchapters.includes(subChapterId)) {
+                completedSubchapters.push(subChapterId);
+            }
         }
         setTimeout(() => {
             // After fade-out, update the content
@@ -99,6 +102,7 @@ export default function Learn() {
                                 {chapter.subChapters.map(subChapter => (
                                     <div key={subChapter.index} className={"navigation-subchapter" + (currentSubChapterId === subChapter.index ? " active" : "")} onClick={() => handleChangeSubChapter(subChapter.index)}>
                                         <span className="subchapter-title">{subChapter.title}</span>
+                                        {completedSubchapters.includes(subChapter.index) ? '✓' : ''}
                                     </div>
                                 ))}
                             </div>
