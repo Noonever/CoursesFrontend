@@ -15,6 +15,9 @@ export function links() {
 export async function loader({request}: LoaderFunctionArgs): Promise<{ userId: string, data: { courseCard: CourseCard, percentage: number }[] }> {
     const userId = await requireUserId(request);
     const courseProgressions = await getProgressions(userId);
+    if (courseProgressions.length === 0) {
+        return { userId, data: [] };
+    }
     const userCoursesIds = courseProgressions.map((progression) => progression.courseId);
     const userCourseCards = await getCourseCards(userCoursesIds);
     const mergedData = userCourseCards.map(courseCard => {
