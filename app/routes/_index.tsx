@@ -31,6 +31,9 @@ export default function Index() {
     }
 
     function getRandomElements(arr: any[], count: number) {
+        if(!arr.length){
+            return [];
+        }
         let shuffled = arr.slice(0), i = arr.length, min = i - count, temp, index;
         while (i-- > min) {
             index = Math.floor((i + 1) * Math.random());
