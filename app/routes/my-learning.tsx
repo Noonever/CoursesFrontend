@@ -23,7 +23,7 @@ export async function loader({request}: LoaderFunctionArgs): Promise<{ userId: s
     const userCourseCards = await getCourseCards(userCoursesIds);
     const mergedData = userCourseCards.map(courseCard => {
         const progression = courseProgressions.find(progression => progression.courseId === courseCard.id);
-        const percentage = progression ? progression.completedSubchapters.length / courseCard.totalSubchapters : 0;
+        const percentage = progression ? (progression.completedSubchapters.length / courseCard.totalSubchapters) * 100 : 0;
         return { courseCard, percentage };
     });
     return { userId, data: mergedData };
