@@ -13,7 +13,7 @@ export async function getProgression(userId: string, courseId: string): Promise<
 
 export async function getProgressions(userId: string): Promise<CourseProgression[]> {
     const { data } = await client.get("/learn/progressions", { params: { userId } });
-    return data;
+    return data.items;
 }
 
 export async function setLastViewedSubchapter(userId: string, courseId: string, subchapterId: number) {

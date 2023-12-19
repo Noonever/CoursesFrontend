@@ -9,7 +9,7 @@ export async function getCourse(id: string): Promise<Course> {
 
 export async function getCourseCards(ids?: string[]): Promise<CourseCard[]> {
     const { data } = await client.get("/course/cards", { params: { ids } });
-    return data;
+    return data.items;
 }
 
 export async function getCourseDemo(id: string): Promise<CourseDemo> {
