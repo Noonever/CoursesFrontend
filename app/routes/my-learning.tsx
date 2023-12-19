@@ -2,11 +2,11 @@ import { useState } from "react";
 import type { CourseCard } from "~/types/course";
 
 import styles from "~/styles/my-learning.css";
-import { useLoaderData, useNavigate } from "@remix-run/react";
-import { getProgressions } from "~/fetchers/learn";
+import { useLoaderData, useNavigate, useRevalidator } from "@remix-run/react";
+import { getProgressions, leaveCourse } from "~/fetchers/learn";
 import { getCourseCards } from "~/fetchers/course";
 import { requireUserId } from "~/utils/session.server";
-import { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "@remix-run/node";
 
 export function links() {
     return [{ rel: "stylesheet", href: styles }];
@@ -19,7 +19,7 @@ export async function loader({request}: LoaderFunctionArgs): Promise<{ userId: s
     const userCourseCards = await getCourseCards(userCoursesIds);
     const mergedData = userCourseCards.map(courseCard => {
         const progression = courseProgressions.find(progression => progression.courseId === courseCard.id);
-        const percentage = progression ? progression.completionPercentage : 0;
+        const percentage = progression ? progression.completedSubchapters.length / progression.totalChapters : 0;
         return { courseCard, percentage };
     });
     return { userId, data: mergedData };
@@ -27,12 +27,19 @@ export async function loader({request}: LoaderFunctionArgs): Promise<{ userId: s
 
 export default function MyLearning() {
     const navigate = useNavigate();
-    const { data } = useLoaderData<typeof loader>();
+    const { userId, data } = useLoaderData<typeof loader>();
     const [searchText, setSearchText] = useState("");
+    const revalidator = useRevalidator();
 
     const filteredData = data.filter((userCourse) => userCourse.courseCard.title.toLowerCase().includes(searchText.toLowerCase()));
 
     function renderCourseProgression(course: CourseCard, percentage: number) {
+
+        async function handleLeaveCourse() {
+            await leaveCourse(userId, course.id);
+            revalidator.revalidate();
+        }
+
         return (
             <div className="progression-wrapper">
                 <div className="progression">
@@ -56,7 +63,7 @@ export default function MyLearning() {
                                 <div className="progress-bar" style={{ width: `${percentage}%` }}></div>
                             </div>
                             <div className="buttons">
-                                <button className="exclude button">Leave course</button>
+                                <button className="exclude button" onClick={handleLeaveCourse} >Leave course</button>
                                 <button className="learn button" onClick={() => navigate(`/learn/${course.id}`)}>Continue learning</button>
                             </div>
                         </div>

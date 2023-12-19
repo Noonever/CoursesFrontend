@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import { useLoaderData, useNavigate } from "@remix-run/react";
+import { useLoaderData, useNavigate, useRevalidator } from "@remix-run/react";
 import type { CourseDemo } from "~/types/course";
 
 import { getCourseDemo } from "~/fetchers/course";
@@ -25,6 +25,7 @@ export async function loader({request}: LoaderFunctionArgs): Promise<{userId: st
 export default function Course() {
     const { userId, courseDemo, isStudying }= useLoaderData<typeof loader>();
     const navigate = useNavigate();
+    const revalidator = useRevalidator();
 
     async function handleLearnClick() {
         if (!isStudying) {
@@ -35,6 +36,7 @@ export default function Course() {
 
     async function handleExcludeClick() {
         await leaveCourse(userId, courseDemo.id);
+        revalidator.revalidate();
     }
 
     return (
