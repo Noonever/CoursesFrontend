@@ -47,7 +47,7 @@ export default function Course() {
             </div>
             <div className="course-controls">
                 <button onClick={handleLearnClick} className="course-control" id="learn">Study</button>
-                {!isStudying && <button onClick={handleExcludeClick} className="course-control" id="exclude">Exclude me</button>}
+                {isStudying && <button onClick={handleExcludeClick} className="course-control" id="exclude">Exclude me</button>}
             </div>
             <div className="info-container">
                 <p>{courseDemo.info}</p>

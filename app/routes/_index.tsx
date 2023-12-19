@@ -34,6 +34,7 @@ export default function Index() {
         if(!arr.length){
             return [];
         }
+        if(arr.length <= count) return arr;
         let shuffled = arr.slice(0), i = arr.length, min = i - count, temp, index;
         while (i-- > min) {
             index = Math.floor((i + 1) * Math.random());
@@ -77,7 +78,6 @@ export default function Index() {
     function renderCourseCardsRow() {
         const filteredCourseCards = getRandomElements(courseCards, 5);
         const chunkedCourseCards = splitCourseCardsIntoRows(filteredCourseCards, 5);
-        console.log(chunkedCourseCards);
         return (
             <div className="course-cards-container" style={{ width: "100%", marginTop: "20px" }}>
                 {chunkedCourseCards.map((chunk, index) => (

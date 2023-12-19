@@ -71,7 +71,7 @@ export const links: LinksFunction = () => {
         },
         {
             rel: 'stylesheet',
-            href: "https://fonts.googleapis.com/css2?family=Roboto&family=Sora:wght@500&display=swap"
+            href: "https://fonts.googleapis.com/css2?family=Open+Sans:wght@300&display=swap"
         },
         {
             rel: 'stylesheet',
