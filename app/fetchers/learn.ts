@@ -22,12 +22,12 @@ export async function getProgressions(userId: string): Promise<CourseProgression
 }
 
 export async function setLastViewedSubchapter(userId: string, courseId: string, subchapterId: number) {
-    const { data } = await client.put("/learn/set-last-viewed-subchapter", { userId, courseId, subchapterId });
+    const { data } = await client.put("/learn/update-progression", { userId, courseId, lastViewedSubchapter: subchapterId });
     return data;
 }
 
 export async function setSubchapterCompleted(userId: string, courseId: string, subchapterId: number) {
-    const { data } = await client.put("/learn/set-subchapter-completed", { userId, courseId, subchapterId });
+    const { data } = await client.put("/learn/update-progression", { userId, courseId, completedSubchapters: [subchapterId] });
     return data;
 }
 
