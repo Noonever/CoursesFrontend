@@ -2,33 +2,32 @@ export interface Info {
     html: string;
 }
 
-export interface SelectTestData {
+export interface Question {
+    question: string;
+    type: "select-one" | "select-many" | "compare";
     options: string[];
 }
 
-export interface CompareTestData {
-    firstSet: string[];
-    secondSet: string[];
-}
-
 export interface Test {
-    question: string;
-    type: "select-one" | "select-many" | "compare";
-    data: SelectTestData | CompareTestData;
+    questions: Question[];
 }
 
 export interface Video {
     source: string;
 }
 
-export interface SubChapter {
-    index: number;
-    title: string;
+export interface Content {
     type: 'info' | 'test' | 'video';
     data: Info | Test | Video;
 }
 
-export default interface Chapter {
+export interface SubChapter {
+    index: number;
+    title: string;
+    content: Content;
+}
+
+export interface Chapter {
     index: number;
     title: string;
     subChapters: SubChapter[];

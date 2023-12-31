@@ -1,10 +1,12 @@
 import { useLoaderData } from "@remix-run/react";
 import type { LoaderFunctionArgs } from "@remix-run/node";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Course } from "~/types/course";
-import type { Info, SelectTestData, CompareTestData, Test, Video } from "~/types/chapter";
+import type { Info, Question, Test, Video, SubChapter, Content } from "~/types/chapter";
 import type { CourseProgression } from "~/types/courseProgression";
+
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 import styles from "~/styles/learn.css";
 import checkboxStyles from "~/styles/cool-checkbox.css";
@@ -13,66 +15,174 @@ import { getProgression, submitTest, setLastViewedSubchapter, setSubchapterCompl
 import { getCourse } from "~/fetchers/course";
 import { requireUserId } from "~/utils/session.server";
 
+import useUserWatched from "~/hooks/useUserWacthed";
+
 export function links() {
     return [{ rel: "stylesheet", href: styles }, { rel: "stylesheet", href: checkboxStyles }];
 }
 
-export async function loader({request}: LoaderFunctionArgs): Promise<{userId: string, course: Course, progression: CourseProgression }> {
-    const userId = await requireUserId(request);
+export async function loader({ request }: LoaderFunctionArgs): Promise<{ userId: string, course: Course, progression: CourseProgression }> {
+    const userId = await requireUserId(request) ?? "0";
     const courseId = request.url.split('/').pop();
     if (!courseId) {
         throw new Error("Course ID is required")
     }
-    const course = await getCourse(courseId);
-    if (course === null) {
-        throw new Error("Course not found")
+    // TODO: turn on API
+    // const course = await getCourse(courseId);
+    // if (course === null) {
+    //     throw new Error("Course not found")
+    // }
+    // const progression = await getProgression(userId, courseId);
+
+    const course: Course = {
+        id: "0",
+        title: "test",
+        chapters: [
+            {
+                index: 0,
+                title: "test",
+                subChapters: [
+                    {
+                        index: 0,
+                        title: "test",
+                        content: {
+                            type: "test",
+                            data: {
+                                questions: [
+                                    {
+                                        question: "one",
+                                        type: "select-one",
+                                        options: ["test", "test"]
+                                    },
+                                    {
+                                        question: "two",
+                                        type: "select-many",
+                                        options: ["test", "test"]
+                                    },
+                                    {
+                                        question: "three",
+                                        type: "compare",
+                                        options: ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j",]
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        index: 1,
+                        title: "test2",
+                        content: {
+                            type: "test",
+                            data: {
+                                questions: [
+                                    {
+                                        question: "one",
+                                        type: "select-one",
+                                        options: ["test", "test"]
+                                    },
+                                    {
+                                        question: "two",
+                                        type: "select-many",
+                                        options: ["test", "test"]
+                                    },
+                                    {
+                                        question: "three",
+                                        type: "compare",
+                                        options: ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j",]
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        index: 2,
+                        title: "Few words about python",
+                        content: {
+                            type: "info",
+                            data: {
+                                html: "Python is a great language for beginners."
+                            }
+                        }
+                    }
+                ]
+            }
+        ]
     }
-    const progression = await getProgression(userId, courseId);
+    const progression = {
+        courseId,
+        userId,
+        completedSubchapters: [],
+        lastViewedSubchapter: 0,
+        isCompleted: false,
+        isArchived: false
+    }
     return { userId, course, progression };
 }
 
 export default function Learn() {
     const { userId, course, progression } = useLoaderData<typeof loader>();
-    const completedSubchapters = progression.completedSubchapters;
-    const [expandedChapterIds, setExpandedChapterIds] = useState<number[]>([0]);
-    const [currentSubChapterId, setCurrentSubChapterId] = useState<number>(progression.lastViewedSubchapter ?? 0);
-    const [selectedSelectOneTestAnswerId, setSelectedSelectOneTestAnswerId] = useState<number>(0);
-    const [selectedSelectManyTestAnswersIds, setSelectedSelectManyTestAnswersIds] = useState<number[]>([]);
-    const [compareTestAnswersIds, setCompareTestAnswersIds] = useState<number[]>([]);
-    const [selectedCompareOptionId, setSelectedCompareOptionId] = useState<number | null>(null);
-    const [transition, setTransition] = useState(false);
 
-    const currentSubchapter = course.chapters.find(chapter => chapter.subChapters.some(subchapter => subchapter.index === currentSubChapterId))?.subChapters.find(subchapter => subchapter.index === currentSubChapterId);
-    if (currentSubchapter === undefined) {
-        return <p>Subchapter not found</p>;
-    }
-    const currentSubchapterType = currentSubchapter.type;
+    const [expandedChapterIds, setExpandedChapterIds] = useState<number[]>([0]);
+    const [currentSubChapterId, setCurrentSubChapterId] = useState<number>(progression.lastViewedSubchapter);
+    const currentSubchapter = course.chapters.find(chapter => chapter.subChapters.some(subchapter => subchapter.index === currentSubChapterId))?.subChapters.find(subchapter => subchapter.index === currentSubChapterId) as SubChapter;
+    const [completedSubchapters, setCompletedSubchapters] = useState<number[]>(progression.completedSubchapters);
     const lastSubchapterIndex = course.chapters[course.chapters.length - 1].subChapters[course.chapters[course.chapters.length - 1].subChapters.length - 1].index;
 
-    function flushSelectedAnswers() {
-        setSelectedSelectOneTestAnswerId(0);
-        setSelectedSelectManyTestAnswersIds([]);
-        setCompareTestAnswersIds([]);
-        setSelectedCompareOptionId(null);
-    }
+    const [testAnswers, setTestAnswers] = useState<Record<number, number[]>>(getEmptyTestAnswers());
+    const [transition, setTransition] = useState(false);
+    const [ref, isVisible] = useUserWatched<HTMLDivElement>();
 
-    const handleChangeSubChapter = async (subChapterId: number) => {
-        setTransition(true); // Begin fade-out
-        flushSelectedAnswers();
-        await setLastViewedSubchapter(userId, course.id, subChapterId);
-        if (currentSubchapterType !== 'test') {
-            await setSubchapterCompleted(userId, course.id, subChapterId);
-            if (!completedSubchapters.includes(subChapterId)) {
-                completedSubchapters.push(subChapterId);
+    useEffect(() => {
+        if (isVisible) {
+            if (currentSubchapter.content.type !== 'test') {
+                handleCompleteSubchapter()
+                    .catch(console.error);
             }
         }
+    }, [isVisible]); // This will only run once because after visibility is true, the observer disconnects
+
+    async function handleCompleteSubchapter() {
+        if (completedSubchapters.includes(currentSubChapterId)) {
+            return;
+        }
+        console.log('Completing subchapter', currentSubChapterId);
+        setCompletedSubchapters([...completedSubchapters, currentSubChapterId]);
+        // TODO: turn on API
+        // await setSubchapterCompleted(userId, course.id, currentSubChapterId);
+    }
+
+    async function handleChangeSubChapter(subChapterId: number) {
+        setTransition(true); // Begin fade-out
+        // TODO: turn on API
+        // await setLastViewedSubchapter(userId, course.id, subChapterId);
         setTimeout(() => {
             // After fade-out, update the content
             setCurrentSubChapterId(subChapterId);
             // Begin fade-in after content is updated
             setTransition(false);
         }, 400); // Ensure this matches the duration of the opacity transition
-    };
+    }
+
+    function getEmptyTestAnswers() {
+        const test = currentSubchapter.content.data as Test;
+        const testLength = test.questions?.length ?? 0;
+        const emptyTestAnswers: Record<number, number[]> = {};
+        for (let i = 0; i < testLength; i++) {
+            const questionType = test.questions[i].type;
+            if (questionType === 'select-one') {
+                emptyTestAnswers[i] = [0];
+            }
+            if (questionType === 'select-many') {
+                emptyTestAnswers[i] = [];
+            }
+            if (questionType === 'compare') {
+                const optionsLength = test.questions[i].options.length / 2;
+                const optionsIds = [...Array(optionsLength).keys()];
+                emptyTestAnswers[i] = optionsIds;
+            }
+        }
+        return emptyTestAnswers;
+    }
 
     function renderNavigation() {
 
@@ -117,158 +227,173 @@ export default function Learn() {
         );
     }
 
-    function renderLearnSection() {
+    function renderContent(content: Content) {
 
-        // Render info
-        if (currentSubchapterType === 'info') {
-            const data = currentSubchapter.data as Info;
+        function renderInfo(data: Info) {
             const htmlString = data.html;
             if (htmlString) {
                 return <div className="learn-info" dangerouslySetInnerHTML={{ __html: htmlString }} />;
             }
+        }
 
-            // Render test
-        } else if (currentSubchapterType === 'test') {
-            const data = currentSubchapter.data as Test;
-            const testType = data.type;
-            let testSection = <></>
+        function renderTest(data: Test) {
+            
+            const questions = data.questions;
 
-            async function sendAnswer(answer: number[]) {
-                const response = await submitTest(course.id, currentSubchapter.index, answer);
-                if (response) {
-                    await setSubchapterCompleted( userId, course.id, currentSubchapter.index );
-                }
+            function handleChangeSelectOneAnswer(questionIndex: number, optionIndex: number) {
+                setTestAnswers((prevAnswers) => {
+                    return {
+                        ...prevAnswers,
+                        [questionIndex]: [optionIndex]
+                    };
+                });
             }
 
-            // Render select-one test
-            if (testType === 'select-one') {
-                const testData = data.data as SelectTestData;
-                const options = testData.options;
-                testSection = (
-                    <div className="test">
+            function handleChangeSelectManyAnswer(questionIndex: number, optionIndex: number) {
+                const newAnswers = testAnswers[questionIndex];
+                if (newAnswers.includes(optionIndex)) {
+                    newAnswers.splice(newAnswers.indexOf(optionIndex), 1);
+                } else {
+                    newAnswers.push(optionIndex);
+                }
+                setTestAnswers((prevAnswers) => {
+                    return {
+                        ...prevAnswers,
+                        [questionIndex]: newAnswers
+                    };
+                })
+            }
+
+            function handleChangeCompareAnswer(questionIndex: number, fromOptionIndex: number, toOptionIndex: number) {
+                const newAnswers = testAnswers[questionIndex];
+                [newAnswers[fromOptionIndex], newAnswers[toOptionIndex]] = [newAnswers[toOptionIndex], newAnswers[fromOptionIndex]];
+                setTestAnswers((prevAnswers) => {
+                    return {
+                        ...prevAnswers,
+                        [questionIndex]: newAnswers
+                    };
+                })
+            }
+
+            function renderQuestion(question: Question, questionIndex: number) {
+                const questionType = question.type;
+                const options = question.options;
+                const answers = testAnswers[questionIndex];
+                let questionElement = <></>;
+
+                // Render select question
+                if (questionType === 'select-one' || questionType === 'select-many') {
+                    questionElement = (
                         <div className="test-options">
                             {options.map((option, index) => (
                                 <label key={index} className="checkbox style-h">
                                     <input onChange={() => {
-                                        setSelectedSelectOneTestAnswerId(index);
-                                    }} checked={selectedSelectOneTestAnswerId === index} type="checkbox" />
+                                        questionType === 'select-one' ?
+                                            handleChangeSelectOneAnswer(questionIndex, index) :
+                                            handleChangeSelectManyAnswer(questionIndex, index)
+                                    }} checked={answers.includes(index)} type="checkbox" />
                                     <div className="checkbox__checkmark"></div>
                                     <div className="checkbox__body">{option}</div>
                                 </label>
                             ))}
                         </div>
-                        <div className="test-submit">
-                            <button className="test-submit-button" onClick={() => {
-                                sendAnswer([selectedSelectOneTestAnswerId]);
-                            }}>Отправить</button>
-                        </div>
-                    </div>
-                )
-
-                // Render select-many test
-            } else if (testType === 'select-many') {
-                const testData = data.data as SelectTestData;
-                const options = testData.options;
-                testSection = (
-                    <div className="test">
-                        <div className="test-options">
-                            {options.map((option, index) => (
-                                <label key={index} className="checkbox style-h" >
-                                    <input key={index} onChange={
-                                        () => {
-                                            if (selectedSelectManyTestAnswersIds.includes(index)) {
-                                                setSelectedSelectManyTestAnswersIds(selectedSelectManyTestAnswersIds.filter(id => id !== index));
-                                            } else {
-                                                setSelectedSelectManyTestAnswersIds([...selectedSelectManyTestAnswersIds, index]);
-                                            }
-                                        }
-                                    } checked={selectedSelectManyTestAnswersIds.includes(index)} type="checkbox" />
-                                    <div className="checkbox__checkmark"></div>
-                                    <div className="checkbox__body">{option}</div>
-                                </label>
-                            ))}
-                        </div>
-                        <div className="test-submit">
-                            <button className="test-submit-button" onClick={() => {
-                                sendAnswer(selectedSelectManyTestAnswersIds);
-                            }}>Отправить</button>
-                        </div>
-                    </div >
-                )
-
-                // Render compare test
-            } else if (testType === 'compare') {
-                const testData = data.data as CompareTestData;
-                const firstSet = testData.firstSet;
-                const secondSet = testData.secondSet;
-
-                if (compareTestAnswersIds.length !== firstSet.length) {
-                    setCompareTestAnswersIds(firstSet.map((value, index) => index));
+                    )
                 }
 
-                function handleFirstSetClick(index: number) {
-                    selectedCompareOptionId === index ? setSelectedCompareOptionId(null) : setSelectedCompareOptionId(index);
-                }
+                // Render compare question
+                else if (questionType === 'compare') {
+                    const firstOptionsSet = options.slice(0, options.length / 2);
+                    const secondOptionsSet = options.slice(options.length / 2);
+                    console.log(testAnswers)
+                    const answers = testAnswers[questionIndex];
 
-                function handleSecondSetClick(index: number) {
-                    if (selectedCompareOptionId === null) {
-                        return
+                    function handleOnDragEnd(result) {
+                        const fromId = result.source.index;
+                        const toId = result.destination.index;
+                        console.log(fromId, toId);
+                        handleChangeCompareAnswer(questionIndex, fromId, toId);
                     }
-                    const newCompareTestAnswersIds = [...compareTestAnswersIds];
-                    [newCompareTestAnswersIds[selectedCompareOptionId], newCompareTestAnswersIds[index]] = [newCompareTestAnswersIds[index], newCompareTestAnswersIds[selectedCompareOptionId]];
-                    setCompareTestAnswersIds(newCompareTestAnswersIds);
-                    setSelectedCompareOptionId(null);
+                    questionElement = (
+                        <div className="test-options">
+                            <DragDropContext onDragEnd={handleOnDragEnd}>
+                                <div className="compare">
+                                    <div className="compare-set">
+                                        {firstOptionsSet.map((item, index) => (
+                                            <div className="compare-option static" key={index}>
+                                                {item}
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="compare-signs">
+                                        {firstOptionsSet.map((item, index) => (
+                                            <div className="compare-option sign" key={index}>
+                                                -
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <Droppable droppableId={`answers-${questionIndex}`}>
+                                        {(provided) => (
+                                            <div className="compare-set" {...provided.droppableProps} ref={provided.innerRef}>
+                                                {answers.map((item, index) => (
+                                                    <Draggable key={item} draggableId={`draggable-${questionIndex}-${item}`} index={index}>
+                                                        {(provided) => (
+                                                            <div
+                                                                className="compare-option"
+                                                                ref={provided.innerRef}
+                                                                {...provided.draggableProps}
+                                                                {...provided.dragHandleProps}
+                                                            >
+                                                                {secondOptionsSet[item]}
+                                                            </div>
+                                                        )}
+                                                    </Draggable>
+                                                ))}
+                                                {provided.placeholder}
+                                            </div>
+                                        )}
+                                    </Droppable>
+                                </div>
+                            </DragDropContext>
+                        </div>
+                    )
                 }
 
-                testSection = (
-                    <div className="test">
-                        <div className="compare">
-                            <div className="compare-set">
-                                {firstSet.map((item, index) => (
-                                    <div
-                                        className="test-option"
-                                        key={index}
-                                        id={selectedCompareOptionId === index ? 'selected' : ''}
-                                        onClick={() => handleFirstSetClick(index)}
-                                    >{item}</div>
-                                ))}
-                            </div>
-                            <div className="compare-set">
-                                {
-                                    (compareTestAnswersIds).map((item, index) => (
-                                        <div
-                                            className="test-option"
-                                            key={index}
-                                            id={selectedCompareOptionId === index ? 'selected' : ''}
-                                            onClick={() => handleSecondSetClick(index)}
-                                        >{(secondSet[item])}</div>
-                                    ))
-                                }
-                            </div>
+                return (
+                    <>
+                        <span className="test-question">{question.question}</span>
+                        <div className="test">
+                            {questionElement}
                         </div>
-                        <div className="test-submit">
-                            <button className="test-submit-button" onClick={() => {
-                                sendAnswer(compareTestAnswersIds);
-                            }}>Отправить</button>
-                        </div>
-                    </div>
+                    </>
                 )
-            } else {
-                return null;
             }
 
             return (
                 <div className="learn-test">
-                    <div className="test-question">{data.question}</div>
-                    {testSection}
+                    {questions.map((question, index) => (renderQuestion(question, index)))}
+                    <div className="test-submit">
+                        <button className="test-submit-button" onClick={() => {
+                            alert(JSON.stringify(testAnswers));
+                        }}>Submit</button>
+                    </div>
                 </div>
             )
+        }
 
-            // Render video
-        } else if (currentSubchapterType === 'video') {
-            const data = currentSubchapter.data as Video;
+        function renderVideo(data: Video) {
             return <div className="learn-video">{data.source}</div>;
         }
+
+        if (content.type === 'info') {
+            return renderInfo(content.data as Info);
+        } else if (content.type === 'test') {
+            return renderTest(content.data as Test);
+        } else if (content.type === 'video') {
+            return renderVideo(content.data as Video);
+        } else {
+            return <>Error occurred</>;
+        }
+
     }
 
     return (
@@ -285,7 +410,7 @@ export default function Learn() {
                         </div>
                     </div>
                     <div className={"learn-content" + (transition ? ' covered' : '')} >
-                        {renderLearnSection()}
+                        {renderContent(currentSubchapter.content)}
                         <div className="pagination">
                             <div className="previous-button-container">
                                 {currentSubChapterId > 0 && <span className="pagination-button" onClick={() => {
@@ -297,6 +422,8 @@ export default function Learn() {
                                     handleChangeSubChapter(currentSubChapterId + 1);
                                 }}>NEXT</span>}
                             </div>
+                        </div>
+                        <div ref={ref}>
                         </div>
                     </div>
                 </div>

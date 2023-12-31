@@ -16,7 +16,7 @@
 
 .navigation {
     background-color: white;
-    width: 300px;
+    width: 500px;
     border-radius: 2px;
     overflow: hidden;
     height: max-content;
@@ -59,6 +59,7 @@
     border-bottom: 1px solid #d9d9d9;
     transition: all 0.2s ease-out;
     cursor: pointer;
+    min-height: max-content;
 }
 
 .learn-container {
@@ -149,30 +150,56 @@
     width: 50%;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 30px;
+}
+
+.compare-signs {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.compare-icons{
+    padding-top: 3px;
+    display: flex;
+    flex-direction: column;
+    gap: 36px
 }
 
 #selected {
     background-color: #66e882;
 }
-
+    
 .test-options {
     width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 30px;
 }
 
-.test-option {
+.compare-option {
     display: flex;
     flex-direction: row;
     justify-content: center;
     gap: 20px;
-    background-color: rgb(255, 175, 146);
     cursor: pointer;
     padding: 10px;
     border-radius: 2px;
     font-size: 20px;
+    border-radius: 10px;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+    background: linear-gradient(45deg, rgba(233, 50, 56, 0.802) 0%, #ffcdcd 50%, #ffcdcd 50%, #ffffff 100%);
+}
+
+.sign {
+    background: none;
+    box-shadow: none;
+    cursor: default;
+}
+
+.static {
+    background: linear-gradient(45deg, rgba(255, 175, 178, 0.802) 0%, #ffcdcd 50%, #ffcdcd 50%, #ffffff 100%);
+    cursor: default;
 }
 
 .test-option:hover {

@@ -1,11 +1,11 @@
-import type Chapter from "./chapter";
+import type { Chapter }from "./chapter";
 
 interface CourseBase {
     id: string;
     title: string;
 }
 
-interface Tag {
+export interface Tag {
     groupName: "difficulty" | "language" | "specification";
     value: string;
 }
@@ -17,11 +17,19 @@ export interface CourseCard extends CourseBase {
 }
 
 export interface CourseDemo extends CourseBase {
-    info: string;
-    goal: string;
+    previewHtml: string;
     tags: Tag[]
 }
 
 export interface Course extends CourseBase {
+    chapters: Chapter[];
+}
+
+export interface CourseCreateSchema {
+    title: string;
+    tags: Tag[];
+    description: string;
+    previewHtml: string;
+    estimation: number;
     chapters: Chapter[];
 }

@@ -68,7 +68,6 @@
     font-size: 20px;
     text-align: center;
     transition: font-weight 0.25s ease;
-    font-weight: bold;
     color: #333;
     background: linear-gradient(45deg, rgba(233, 50, 56, 0.802) 0%, #ffcdcd 50%, #ffcdcd 50%, #ffffff 100%);
     background-size: 200% 100%;
