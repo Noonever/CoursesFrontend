@@ -27,95 +27,13 @@ export async function loader({ request }: LoaderFunctionArgs): Promise<{ userId:
     if (!courseId) {
         throw new Error("Course ID is required")
     }
-    // TODO: turn on API
-    // const course = await getCourse(courseId);
-    // if (course === null) {
-    //     throw new Error("Course not found")
-    // }
-    // const progression = await getProgression(userId, courseId);
 
-    const course: Course = {
-        id: "0",
-        title: "test",
-        chapters: [
-            {
-                index: 0,
-                title: "test",
-                subChapters: [
-                    {
-                        index: 0,
-                        title: "test",
-                        content: {
-                            type: "test",
-                            data: {
-                                questions: [
-                                    {
-                                        question: "one",
-                                        type: "select-one",
-                                        options: ["test", "test"]
-                                    },
-                                    {
-                                        question: "two",
-                                        type: "select-many",
-                                        options: ["test", "test"]
-                                    },
-                                    {
-                                        question: "three",
-                                        type: "compare",
-                                        options: ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j",]
-                                    }
-                                ]
-                            }
-                        }
-                    },
-                    {
-                        index: 1,
-                        title: "test2",
-                        content: {
-                            type: "test",
-                            data: {
-                                questions: [
-                                    {
-                                        question: "one",
-                                        type: "select-one",
-                                        options: ["test", "test"]
-                                    },
-                                    {
-                                        question: "two",
-                                        type: "select-many",
-                                        options: ["test", "test"]
-                                    },
-                                    {
-                                        question: "three",
-                                        type: "compare",
-                                        options: ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j",]
-                                    }
-                                ]
-                            }
-                        }
-                    },
-                    {
-                        index: 2,
-                        title: "Few words about python",
-                        content: {
-                            type: "info",
-                            data: {
-                                html: "Python is a great language for beginners."
-                            }
-                        }
-                    }
-                ]
-            }
-        ]
+    const course = await getCourse(courseId);
+    if (course === null) {
+        throw new Error("Course not found")
     }
-    const progression = {
-        courseId,
-        userId,
-        completedSubchapters: [],
-        lastViewedSubchapter: 0,
-        isCompleted: false,
-        isArchived: false
-    }
+    const progression = await getProgression(userId, courseId);
+
     return { userId, course, progression };
 }
 
@@ -147,14 +65,12 @@ export default function Learn() {
         }
         console.log('Completing subchapter', currentSubChapterId);
         setCompletedSubchapters([...completedSubchapters, currentSubChapterId]);
-        // TODO: turn on API
-        // await setSubchapterCompleted(userId, course.id, currentSubChapterId);
+        await setSubchapterCompleted(userId, course.id, currentSubChapterId);
     }
 
     async function handleChangeSubChapter(subChapterId: number) {
         setTransition(true); // Begin fade-out
-        // TODO: turn on API
-        // await setLastViewedSubchapter(userId, course.id, subChapterId);
+        await setLastViewedSubchapter(userId, course.id, subChapterId);
         setTimeout(() => {
             // After fade-out, update the content
             setCurrentSubChapterId(subChapterId);

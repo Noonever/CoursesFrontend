@@ -4,7 +4,6 @@ import { Editor } from '@tinymce/tinymce-react';
 import styles from "~/styles/learn.css";
 import checkboxStyles from "~/styles/cool-checkbox.css";
 import createStyles from "~/styles/create.css";
-import textEditorStyles from "~/styles/text-editor.css";
 import { Chapter, SubChapter } from "~/types/chapter";
 import { createCourse } from "~/fetchers/course";
 
@@ -57,7 +56,6 @@ export function links() {
         { rel: "stylesheet", href: styles },
         { rel: "stylesheet", href: checkboxStyles },
         { rel: "stylesheet", href: createStyles },
-        { rel: "stylesheet", href: textEditorStyles },
     ];
 }
 

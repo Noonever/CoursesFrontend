@@ -61,7 +61,7 @@ export async function requireUserId(
 ) {
     const userId = await getUserId(request);
     if (!userId) {
-        throw redirect('/main');
+        // throw redirect('/main');
     }
     return userId;
 }

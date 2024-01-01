@@ -31,7 +31,7 @@ export default function Course() {
         if (!isStudying) {
             await signUpForCourse(userId, courseDemo.id);
         }
-        navigate("/learn/" + courseDemo.id);
+        return navigate("/learn/" + courseDemo.id);
     }
 
     async function handleExcludeClick() {
@@ -52,7 +52,9 @@ export default function Course() {
                 {isStudying && <button onClick={handleExcludeClick} className="course-control" id="exclude">Exclude me</button>}
             </div>
             <div className="info-container">
-                <p>{courseDemo.info}</p>
+                <div className="info-text" dangerouslySetInnerHTML={{ __html: courseDemo.previewHtml }}>
+                
+                </div>
             </div>
         </>
     );
