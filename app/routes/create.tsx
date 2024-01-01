@@ -101,7 +101,7 @@ export default function Create() {
     const [languageTags, setLanguageTags] = useState<string[]>([]);
     const [specificationTags, setSpecificationTags] = useState<string[]>([]);
 
-    const editableSubChapter = courseForm.chapters[editableChapterIndex].subChapters[editableSubChapterIndex]
+    const editableSubChapter = courseForm.chapters[editableChapterIndex]?.subChapters[editableSubChapterIndex]
     const [courseInfoExpanded, setCourseInfoExpanded] = useState(true);
 
     function addChapter() {
@@ -303,6 +303,7 @@ export default function Create() {
                     chapters: newChapters
                 })
             }
+            
             return (
                 <Editor
                     value={htmlString}
@@ -673,23 +674,25 @@ export default function Create() {
         }
     }
 
-    function handleDeleteLanguageTag(index: number) {
-        const newDifficultyTags = difficultyTags
+    
+    function handleDeleteDifficultyTag(index: number) {
+        const newDifficultyTags = [...difficultyTags]
         newDifficultyTags.splice(index, 1)
         setDifficultyTags(newDifficultyTags)
     }
 
+    function handleDeleteLanguageTag(index: number) {
+        const newLanguageTags = [...languageTags]
+        newLanguageTags.splice(index, 1)
+        setLanguageTags(newLanguageTags)
+    }
+
     function handleDeleteSpecificationTag(index: number) {
-        const newSpecificationTags = specificationTags
+        const newSpecificationTags = [...specificationTags]
         newSpecificationTags.splice(index, 1)
         setSpecificationTags(newSpecificationTags)
     }
 
-    function handleDeleteDifficultyTag(index: number) {
-        const newDifficultyTags = difficultyTags
-        newDifficultyTags.splice(index, 1)
-        setDifficultyTags(newDifficultyTags)
-    }
 
     async function handleCreateCourse() {
         console.log(courseForm)

@@ -70,7 +70,7 @@ export default function Learn() {
 
     async function handleChangeSubChapter(subChapterId: number) {
         setTransition(true); // Begin fade-out
-        await setLastViewedSubchapter(userId, course.id, subChapterId);
+        // await setLastViewedSubchapter(userId, course.id, subChapterId);
         setTimeout(() => {
             // After fade-out, update the content
             setCurrentSubChapterId(subChapterId);
