@@ -23,6 +23,7 @@ interface TestForm {
 }
 
 interface VideoForm {
+    file: File | null;
     source: string | null;
 }
 
@@ -266,7 +267,8 @@ export default function Create() {
                     }
                 } else if (type === 'video') {
                     newSubChapter.content.data = {
-                        source: ''
+                        source: '',
+                        file: null
                     }
                 }
                 const newChapters = courseForm.chapters;
@@ -303,7 +305,7 @@ export default function Create() {
                     chapters: newChapters
                 })
             }
-            
+
             return (
                 <Editor
                     value={htmlString}
@@ -674,7 +676,6 @@ export default function Create() {
         }
     }
 
-    
     function handleDeleteDifficultyTag(index: number) {
         const newDifficultyTags = [...difficultyTags]
         newDifficultyTags.splice(index, 1)
@@ -692,7 +693,6 @@ export default function Create() {
         newSpecificationTags.splice(index, 1)
         setSpecificationTags(newSpecificationTags)
     }
-
 
     async function handleCreateCourse() {
         console.log(courseForm)
@@ -743,7 +743,7 @@ export default function Create() {
         let totalSubChapterIndex = 0
         for (const [chapterIndex, chapterForm] of courseForm.chapters.entries()) {
 
-            const subChapters: SubChapter[] = []
+            const formattedSubChapters: SubChapter[] = []
 
             const subChapterForms = chapterForm.subChapters
             if (subChapterForms.length === 0) {
@@ -752,7 +752,7 @@ export default function Create() {
             }
 
             for (const [subChapterIndex, subChapterForm] of subChapterForms.entries()) {
-                const content = subChapterForm.content
+                const content = { ...subChapterForm.content }
                 if (!content?.data) {
                     alert(`Content is required for chapter ${chapterIndex + 1} subchapter ${subChapterIndex + 1}`)
                     return
@@ -765,12 +765,41 @@ export default function Create() {
                 } else if (content.type === 'test') {
                     const questionForms = content.data.questions as QuestionForm[]
                     for (const [questionIndex, questionForm] of questionForms.entries()) {
+
                         if (!questionForm.question) {
                             alert(`Question is required for chapter ${chapterIndex + 1} subchapter ${subChapterIndex + 1} question ${questionIndex + 1}`)
                             return
                         } else if (!questionForm.options.length) {
                             alert(`Options are required for chapter ${chapterIndex + 1} subchapter ${subChapterIndex + 1} question ${questionIndex + 1}`)
                             return
+                        }
+                        if (questionForm.type === 'compare') {
+                            const options = questionForm.options
+                            let indexedOptions = options.slice(options.length / 2, options.length).map((option, index) => {
+                                return {
+                                    index: index,
+                                    option: option
+                                }
+                            })
+                            let shuffled;
+                            do {
+                                // Make a copy of the indexedOptions for comparison after shuffle
+                                shuffled = indexedOptions.map(o => ({ ...o }));
+
+                                // Perform the Fisher-Yates shuffle
+                                for (let i = shuffled.length - 1; i > 0; i--) {
+                                    const j = Math.floor(Math.random() * (i + 1));
+                                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                                }
+                            } while (shuffled.every((val, index) => val.index === indexedOptions[index].index));
+
+                            // Now shuffled is guaranteed to be different from the original indexedOptions
+                            indexedOptions = shuffled;
+
+                            const answers = indexedOptions.map(option => option.index)
+                            content.data.questions[questionIndex].answers = answers
+                            const newOptions = options.slice(0, options.length / 2).concat(indexedOptions.map(option => option.option))
+                            content.data.questions[questionIndex].options = newOptions
                         }
                     }
                 } else if (content.type === 'video') {
@@ -785,7 +814,7 @@ export default function Create() {
                     data: content.data
                 }
 
-                subChapters.push({
+                formattedSubChapters.push({
                     index: totalSubChapterIndex,
                     title: subChapterForm.title,
                     content: contentToAdd
@@ -797,7 +826,7 @@ export default function Create() {
             formattedChapters.push({
                 index: chapterIndex,
                 title: chapterForm.title,
-                subChapters: subChapters
+                subChapters: formattedSubChapters
             })
         }
 
@@ -996,7 +1025,6 @@ export default function Create() {
                                                                     }
                                                                 })
                                                             }
-
                                                         } else {
                                                             return chapter
                                                         }
