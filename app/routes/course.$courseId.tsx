@@ -19,6 +19,7 @@ export async function loader({request}: LoaderFunctionArgs): Promise<{userId: st
         throw new Error("Course ID is required")
     }
     const { preview, isStudying} = await getCourseDemo(courseId, userId);
+    console.log(preview)
     return {userId, courseDemo: preview, isStudying};
 }
 

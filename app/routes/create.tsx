@@ -6,6 +6,7 @@ import checkboxStyles from "~/styles/cool-checkbox.css";
 import createStyles from "~/styles/create.css";
 import { Chapter, SubChapter } from "~/types/chapter";
 import { createCourse } from "~/fetchers/course";
+import {uploadFile} from "~/fetchers/file";
 
 interface InfoForm {
     html: string | null;
@@ -661,8 +662,16 @@ export default function Create() {
             )
         }
 
-        function renderVideoEditor(data: Video) {
-            return <div className="learn-video">{data.source}</div>;
+        function renderVideoEditor(data: VideoForm) {
+            return (
+                <div className="learn-video">
+                    <input onChange={(e) => handleChangeVideoFile(
+                        e,
+                        editableChapterIndex,
+                        editableSubChapterIndex,
+                    )} type='file' accept="video/*" />
+                </div>
+            );
         }
 
         if (content.type === 'info') {
@@ -692,6 +701,14 @@ export default function Create() {
         const newSpecificationTags = [...specificationTags]
         newSpecificationTags.splice(index, 1)
         setSpecificationTags(newSpecificationTags)
+    }
+
+    function handleChangeVideoFile(e: React.ChangeEvent<HTMLInputElement>, chapterIndex: number, subchapterIndex: number) {
+        const newChapters = [...courseForm.chapters]
+        const subChapter = newChapters[chapterIndex].subChapters[subchapterIndex]
+        const data = subChapter.content?.data as VideoForm
+        data.file = e.target.files?.[0] || null
+        setCourseForm({ ...courseForm, chapters: newChapters })
     }
 
     async function handleCreateCourse() {
@@ -739,6 +756,8 @@ export default function Create() {
         }
 
         const formattedChapters: Chapter[] = []
+        const files: { chapterIndex: number, subChapterIndex: number, file: File }[] = []
+
 
         let totalSubChapterIndex = 0
         for (const [chapterIndex, chapterForm] of courseForm.chapters.entries()) {
@@ -803,9 +822,15 @@ export default function Create() {
                         }
                     }
                 } else if (content.type === 'video') {
-                    if (!content.data.source) {
-                        alert(`Source is required for chapter ${chapterIndex + 1} subchapter ${subChapterIndex + 1}`)
+                    if (!content.data.file) {
+                        alert(`File is required for chapter ${chapterIndex + 1} subchapter ${subChapterIndex + 1}`)
                         return
+                    } else {
+                        files.push({
+                            chapterIndex: chapterIndex,
+                            subChapterIndex: subChapterIndex,
+                            file: content.data.file
+                        })
                     }
                 }
 
@@ -830,6 +855,14 @@ export default function Create() {
             })
         }
 
+
+        console.log(files)
+        for (const file of files) {
+            const response = await uploadFile(file.file)
+            console.log(response)
+            formattedChapters[file.chapterIndex].subChapters[file.subChapterIndex].content.data.source = response
+            delete formattedChapters[file.chapterIndex].subChapters[file.subChapterIndex].content.data.file
+        }
         const course: CourseCreateSchema = {
             title: courseForm.title,
             tags: resultingTags,
