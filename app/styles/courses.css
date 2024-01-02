@@ -110,3 +110,15 @@ div.card-body {
 .filter:hover {
     transform: scale(1.05);
 }
+
+
+button {
+    padding: 10px;
+    min-width: max-content;
+    height: 40px;
+    border: none;
+    color: white;
+    background-color: #e88080;
+    border-radius: 5px;
+    cursor: pointer;
+}

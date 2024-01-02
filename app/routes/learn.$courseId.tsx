@@ -26,7 +26,7 @@ export async function loader({request}: LoaderFunctionArgs): Promise<{
     course: Course,
     progression: CourseProgression
 }> {
-    const userId = await requireUserId(request) ?? "0";
+    const userId = await requireUserId(request);
     const courseId = request.url.split('/').pop();
     if (!courseId) {
         throw new Error("Course ID is required")

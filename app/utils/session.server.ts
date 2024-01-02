@@ -61,7 +61,19 @@ export async function requireUserId(
 ) {
     const userId = await getUserId(request);
     if (!userId) {
-        // throw redirect('/main');
+        throw redirect('/');
+    }
+    return userId;
+}
+
+
+export async function requireAdmin(
+    request: Request
+) {
+    const userId = await requireUserId(request);
+    const user = await getUserById(userId);
+    if (!user?.isAdmin) {
+        throw redirect('/');
     }
     return userId;
 }

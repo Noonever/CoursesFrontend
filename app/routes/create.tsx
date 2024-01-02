@@ -6,7 +6,9 @@ import checkboxStyles from "~/styles/cool-checkbox.css";
 import createStyles from "~/styles/create.css";
 import { Chapter, SubChapter } from "~/types/chapter";
 import { createCourse } from "~/fetchers/course";
-import {uploadFile} from "~/fetchers/file";
+import { uploadFile } from "~/fetchers/file";
+import { requireAdmin } from "~/utils/session.server";
+import { LoaderFunctionArgs } from "@remix-run/node";
 
 interface InfoForm {
     html: string | null;
@@ -61,6 +63,11 @@ export function links() {
     ];
 }
 
+export async function loader({ request }: LoaderFunctionArgs) {
+    const userId = await requireAdmin(request)
+    return { userId }
+}
+
 export default function Create() {
 
     const [expandedChapterIds, setExpandedChapterIds] = useState<number[]>([0]);
@@ -90,6 +97,9 @@ export default function Create() {
             }
         ],
     })
+
+    const [loadingModalIsOpened, setLoadingModalIsOpened] = useState(true);
+    const [loadingModalText, setLoadingModalText] = useState('');
 
     const [addableSelectOptions, setAddableSelectOptions] = useState<Record<number, string>>({});
     const [addableCompareOptions, setAddableCompareOptions] = useState<Record<number, [string, string]>>({});
@@ -877,6 +887,15 @@ export default function Create() {
 
     return (
         <>
+            {loadingModalIsOpened && (
+                <div className="modal-overlay">
+                    <div className="modal-loading">
+                        <div className="modal-loading-spinner"></div>
+                        <div className="modal-loading-text">{loadingModalText}</div>
+                    </div>
+                </div>
+            )}
+
             <div style={{ display: "flex", flexDirection: "row", justifyContent: "center", alignItems: "center" }}>
 
             </div>

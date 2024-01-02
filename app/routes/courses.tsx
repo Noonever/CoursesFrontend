@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLoaderData, useLocation, useNavigate } from "@remix-run/react";
-import type { LinksFunction } from "@remix-run/node";
+import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
 
 import Checkbox from "~/components/checkbox";
 
@@ -10,15 +10,20 @@ import { getCourseCards } from "~/fetchers/course";
 import styles from "~/styles/courses.css";
 import courseHeader1 from "~/media/img/zeros-ones.jpg";
 import courseHeader2 from "~/media/img/zeros-ones-2.jpg";
+import { requireUserId } from "~/utils/session.server";
+import { getUserById } from "~/fetchers/user";
+import { User } from "~/types/user";
 
 
 export const links: LinksFunction = () => {
     return [{ rel: "stylesheet", href: styles }];
 }
 
-export async function loader(): Promise<{ courseCards: CourseCard[], groupedTags: Record<string, string[]>}> {
+export async function loader({ request }: LoaderFunctionArgs): Promise<{ courseCards: CourseCard[], groupedTags: Record<string, string[]>, user: User }> {
     const groupedTags: Record<string, string[]> = {};
     const courseCards = await getCourseCards();
+    const userId = await requireUserId(request);
+    const user = await getUserById(userId);
 
     courseCards.forEach(courseCard => {
         courseCard.tags.forEach(tag => {
@@ -30,7 +35,7 @@ export async function loader(): Promise<{ courseCards: CourseCard[], groupedTags
             }
         });
     });
-    return { courseCards, groupedTags };
+    return { courseCards, groupedTags, user };
 }
 
 export default function Courses() {
@@ -39,7 +44,7 @@ export default function Courses() {
     const queryParams = new URLSearchParams(location.search);
     const searchedTag = queryParams.get('tag');
 
-    const { courseCards, groupedTags } = useLoaderData<typeof loader>();
+    const { courseCards, groupedTags, user } = useLoaderData<typeof loader>();
     const [selectedTags, setSelectedTags] = useState<string[]>(searchedTag ? [searchedTag] : []);
     const [searchText, setSearchText] = useState("");
 
@@ -112,9 +117,9 @@ export default function Courses() {
         ))
         return (
             <div className="course-cards-container">
-                {cards.length? cards : (
-                    <div style={{height: "20vh", width: "100%", display: "flex", justifyContent: "center", alignItems: "center"}}>
-                        <span style={{textAlign: "center", fontSize: "30px"}}>No courses found</span>
+                {cards.length ? cards : (
+                    <div style={{ height: "20vh", width: "100%", display: "flex", justifyContent: "center", alignItems: "center" }}>
+                        <span style={{ textAlign: "center", fontSize: "30px" }}>No courses found</span>
                     </div>
                 )}
             </div>
@@ -142,7 +147,10 @@ export default function Courses() {
 
     return (
         <>
-            <span className="section-title">Courses</span>
+            <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                <span className="section-title">Courses</span>
+                {user.isAdmin && <button className="create-course-button" onClick={() => navigate("/create")}>Create Course</button>}
+            </div>
             <div className="search">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className="">
                     <path fillRule="evenodd" d="M17.32 15.906 21.414 20 20 21.414l-4.094-4.094a8 8 0 1 1 1.414-1.414zM11 17a6 6 0 1 0 0-12 6 6 0 0 0 0 12z"></path>
