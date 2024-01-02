@@ -1,27 +1,31 @@
-import { useLoaderData } from "@remix-run/react";
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import {useLoaderData} from "@remix-run/react";
+import type {LoaderFunctionArgs} from "@remix-run/node";
 
-import { useEffect, useState } from "react";
-import type { Course } from "~/types/course";
-import type { Info, Question, Test, Video, SubChapter, Content } from "~/types/chapter";
-import type { CourseProgression } from "~/types/courseProgression";
+import {useEffect, useState} from "react";
+import type {Course} from "~/types/course";
+import type {Info, Question, Test, Video, SubChapter, Content} from "~/types/chapter";
+import type {CourseProgression} from "~/types/courseProgression";
 
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import {DragDropContext, Droppable, Draggable} from "react-beautiful-dnd";
 
 import styles from "~/styles/learn.css";
 import checkboxStyles from "~/styles/cool-checkbox.css";
 
-import { getProgression, submitTest, setLastViewedSubchapter, setSubchapterCompleted } from "~/fetchers/learn";
-import { getCourse } from "~/fetchers/course";
-import { requireUserId } from "~/utils/session.server";
+import {getProgression, submitTest, setLastViewedSubchapter, setSubchapterCompleted} from "~/fetchers/learn";
+import {getCourse} from "~/fetchers/course";
+import {requireUserId} from "~/utils/session.server";
 
 import useUserWatched from "~/hooks/useUserWacthed";
 
 export function links() {
-    return [{ rel: "stylesheet", href: styles }, { rel: "stylesheet", href: checkboxStyles }];
+    return [{rel: "stylesheet", href: styles}, {rel: "stylesheet", href: checkboxStyles}];
 }
 
-export async function loader({ request }: LoaderFunctionArgs): Promise<{ userId: string, course: Course, progression: CourseProgression }> {
+export async function loader({request}: LoaderFunctionArgs): Promise<{
+    userId: string,
+    course: Course,
+    progression: CourseProgression
+}> {
     const userId = await requireUserId(request) ?? "0";
     const courseId = request.url.split('/').pop();
     if (!courseId) {
@@ -34,11 +38,11 @@ export async function loader({ request }: LoaderFunctionArgs): Promise<{ userId:
     }
     const progression = await getProgression(userId, courseId);
 
-    return { userId, course, progression };
+    return {userId, course, progression};
 }
 
 export default function Learn() {
-    const { userId, course, progression } = useLoaderData<typeof loader>();
+    const {userId, course, progression} = useLoaderData<typeof loader>();
 
     const [expandedChapterIds, setExpandedChapterIds] = useState<number[]>([0]);
     const [currentSubChapterId, setCurrentSubChapterId] = useState<number>(progression.lastViewedSubchapter);
@@ -130,7 +134,9 @@ export default function Learn() {
                                 }}
                             >
                                 {chapter.subChapters.map(subChapter => (
-                                    <div key={subChapter.index} className={"navigation-subchapter" + (currentSubChapterId === subChapter.index ? " active" : "")} onClick={() => handleChangeSubChapter(subChapter.index)}>
+                                    <div key={subChapter.index}
+                                         className={"navigation-subchapter" + (currentSubChapterId === subChapter.index ? " active" : "")}
+                                         onClick={() => handleChangeSubChapter(subChapter.index)}>
                                         <span className="subchapter-title">{subChapter.title}</span>
                                         {completedSubchapters.includes(subChapter.index) ? '✓' : ''}
                                     </div>
@@ -148,12 +154,12 @@ export default function Learn() {
         function renderInfo(data: Info) {
             const htmlString = data.html;
             if (htmlString) {
-                return <div className="learn-info" dangerouslySetInnerHTML={{ __html: htmlString }} />;
+                return <div className="learn-info" dangerouslySetInnerHTML={{__html: htmlString}}/>;
             }
         }
 
         function renderTest(data: Test) {
-            
+
             const questions = data.questions;
 
             function handleChangeSelectOneAnswer(questionIndex: number, optionIndex: number) {
@@ -207,7 +213,7 @@ export default function Learn() {
                                         questionType === 'select-one' ?
                                             handleChangeSelectOneAnswer(questionIndex, index) :
                                             handleChangeSelectManyAnswer(questionIndex, index)
-                                    }} checked={answers.includes(index)} type="checkbox" />
+                                    }} checked={answers.includes(index)} type="checkbox"/>
                                     <div className="checkbox__checkmark"></div>
                                     <div className="checkbox__body">{option}</div>
                                 </label>
@@ -229,6 +235,7 @@ export default function Learn() {
                         console.log(fromId, toId);
                         handleChangeCompareAnswer(questionIndex, fromId, toId);
                     }
+
                     questionElement = (
                         <div className="test-options">
                             <DragDropContext onDragEnd={handleOnDragEnd}>
@@ -249,9 +256,12 @@ export default function Learn() {
                                     </div>
                                     <Droppable droppableId={`answers-${questionIndex}`}>
                                         {(provided) => (
-                                            <div className="compare-set" {...provided.droppableProps} ref={provided.innerRef}>
+                                            <div className="compare-set" {...provided.droppableProps}
+                                                 ref={provided.innerRef}>
                                                 {answers.map((item, index) => (
-                                                    <Draggable key={item} draggableId={`draggable-${questionIndex}-${item}`} index={index}>
+                                                    <Draggable key={item}
+                                                               draggableId={`draggable-${questionIndex}-${item}`}
+                                                               index={index}>
                                                         {(provided) => (
                                                             <div
                                                                 className="compare-option"
@@ -290,14 +300,20 @@ export default function Learn() {
                     <div className="test-submit">
                         <button className="test-submit-button" onClick={() => {
                             alert(JSON.stringify(testAnswers));
-                        }}>Submit</button>
+                        }}>Submit
+                        </button>
                     </div>
                 </div>
             )
         }
 
         function renderVideo(data: Video) {
-            return <div className="learn-video">{data.source}</div>;
+            return <div className="learn-video">
+                <video style={{width: '100%'}} controls>
+                    <source src={`http://localhost:8080/file/?id=${data.source}`} type="video/mp4"/>
+                    Your browser does not support the video tag.
+                </video>
+            </div>;
         }
 
         if (content.type === 'info') {
@@ -325,7 +341,7 @@ export default function Learn() {
                             <span className="learn-title">{currentSubchapter.title}</span>
                         </div>
                     </div>
-                    <div className={"learn-content" + (transition ? ' covered' : '')} >
+                    <div className={"learn-content" + (transition ? ' covered' : '')}>
                         {renderContent(currentSubchapter.content)}
                         <div className="pagination">
                             <div className="previous-button-container">
@@ -334,9 +350,10 @@ export default function Learn() {
                                 }}>PREVIOUS</span>}
                             </div>
                             <div className="next-button-container">
-                                {lastSubchapterIndex > currentSubChapterId && <span className="pagination-button" onClick={() => {
-                                    handleChangeSubChapter(currentSubChapterId + 1);
-                                }}>NEXT</span>}
+                                {lastSubchapterIndex > currentSubChapterId &&
+                                    <span className="pagination-button" onClick={() => {
+                                        handleChangeSubChapter(currentSubChapterId + 1);
+                                    }}>NEXT</span>}
                             </div>
                         </div>
                         <div ref={ref}>
