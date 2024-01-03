@@ -12,34 +12,47 @@ export function links() {
     return [{ rel: "stylesheet", href: styles }];
 }
 
+type userProgression = {
+    courseCard: CourseCard,
+    percentage: number,
+    state: "active" | "completed" | "archived",
+}
+
 export async function loader({request}: LoaderFunctionArgs): Promise<{
     userId: string, 
-    activeCourses: { courseCard: CourseCard, percentage: number }[],
+    userProgressions: userProgression[],
 }> {
     const userId = await requireUserId(request);
     const courseProgressions = await getProgressions(userId);
     if (courseProgressions.length === 0) {
-        return { userId, activeCourses: [] };
+        return { userId, userProgressions: [] };
     }
-
     const userCoursesIds = courseProgressions.map((progression) => progression.courseId);
     const userCourseCards = await getCourseCards(userCoursesIds);
-    const mergedActiveData = userCourseCards.map(courseCard => {
+
+    const userProgressions = userCourseCards.map(courseCard => {
         const progression = courseProgressions.find(progression => progression.courseId === courseCard.id);
         const percentage = progression ? Math.round((progression.completedSubchapters.length / courseCard.totalSubchapters) * 100) : 0;
-        return { courseCard, percentage };
+        let state: "active" | "completed" | "archived" = 'active';
+        if (progression?.isCompleted) {
+            state = "completed";
+        } else if (progression?.isArchived) {
+            state = "archived";
+        }
+        return { courseCard, percentage, state };
     });
-    return { userId, activeCourses: mergedActiveData };
+    return { userId, userProgressions };
 }
 
 export default function MyLearning() {
     const navigate = useNavigate();
-    const { userId, activeCourses } = useLoaderData<typeof loader>();
+    const { userId, userProgressions } = useLoaderData<typeof loader>();
     const [searchText, setSearchText] = useState("");
     const [currentTab, setCurrentTab] = useState<"active" | "completed" | "archived">("active");
     const revalidator = useRevalidator();
 
-    const filteredData = activeCourses.filter((userCourse) => userCourse.courseCard.title.toLowerCase().includes(searchText.toLowerCase()));
+    const currentProgressions = userProgressions.filter((userCourse) => userCourse.state === currentTab);
+    const searched = currentProgressions.filter((userCourse) => userCourse.courseCard.title.toLowerCase().includes(searchText.toLowerCase()));
 
     function renderCourseProgression(course: CourseCard, percentage: number) {
 
@@ -85,13 +98,18 @@ export default function MyLearning() {
     return (
         <>
             <span className="section-title">My Learning</span>
+            <div className="tabs">
+                <div className={`tab ${currentTab === "active" ? "active" : ""}`} onClick={() => setCurrentTab("active")}>Active</div>
+                <div className={`tab ${currentTab === "completed" ? "active" : ""}`} onClick={() => setCurrentTab("completed")}>Completed</div>
+                <div className={`tab ${currentTab === "archived" ? "active" : ""}`} onClick={() => setCurrentTab("archived")}>Archived</div>
+            </div>
             <div className="search">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className="">
                     <path fill-rule="evenodd" d="M17.32 15.906 21.414 20 20 21.414l-4.094-4.094a8 8 0 1 1 1.414-1.414zM11 17a6 6 0 1 0 0-12 6 6 0 0 0 0 12z"></path>
                 </svg>
                 <input value={searchText} onChange={e => setSearchText(e.target.value)} className="search" type="text" placeholder="Search" />
             </div>
-            {filteredData.map((userCourse) => renderCourseProgression(userCourse.courseCard, userCourse.percentage))}
+            {searched.map((userCourse) => renderCourseProgression(userCourse.courseCard, userCourse.percentage))}
         </>
     );
 }

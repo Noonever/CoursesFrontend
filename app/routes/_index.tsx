@@ -15,32 +15,46 @@ export function links() {
     return [{ rel: "stylesheet", href: styles }, { rel: "stylesheet", href: coursesStyles }];
 }
 
+type userProgression = {
+    courseCard: CourseCard,
+    percentage: number,
+    state: "active" | "completed" | "archived",
+}
+
 export async function loader({ request }: LoaderFunctionArgs): Promise<{
     courseCards: CourseCard[],
-    activeCourses: { courseCard: CourseCard, percentage: number }[],
+    userProgressions: userProgression[],
 }> {
     const courseCards = await getCourseCards();
+
     const user = await getUser(request);
     if (!user) {
-        return { courseCards, activeCourses: [] };
+        return { courseCards, userProgressions: [] };
     }
     const courseProgressions = await getProgressions(user.id);
     if (courseProgressions.length === 0) {
-        return { courseCards, activeCourses: [] };
+        return { courseCards, userProgressions: [] };
     }
     const userCoursesIds = courseProgressions.map((progression) => progression.courseId);
     const userCourseCards = await getCourseCards(userCoursesIds);
-    const mergedActiveData = userCourseCards.map(courseCard => {
+
+    const userProgressions = userCourseCards.map(courseCard => {
         const progression = courseProgressions.find(progression => progression.courseId === courseCard.id);
         const percentage = progression ? Math.round((progression.completedSubchapters.length / courseCard.totalSubchapters) * 100) : 0;
-        return { courseCard, percentage };
+        let state: "active" | "completed" | "archived" = 'active';
+        if (progression?.isCompleted) {
+            state = "completed";
+        } else if (progression?.isArchived) {
+            state = "archived";
+        }
+        return { courseCard, percentage, state };
     });
-    return { courseCards, activeCourses: mergedActiveData };
+    return { courseCards, userProgressions };
 }
 
 export default function Index() {
     const navigate = useNavigate();
-    const { courseCards, activeCourses } = useLoaderData<typeof loader>();
+    const { courseCards, userProgressions } = useLoaderData<typeof loader>();
 
     function splitCourseCardsIntoRows(courseCards: CourseCard[], rowSize: number) {
         const result = [];
@@ -114,7 +128,9 @@ export default function Index() {
 
     function renderProgress() {
 
-        const progress = activeCourses.slice(0, 5).map(({ courseCard, percentage }) => (
+        const activeProgressions = userProgressions.filter((userCourse) => userCourse.state === "active");
+
+        const progress = activeProgressions.slice(0, 3).map(({ courseCard, percentage }) => (
             <div onClick={() => navigate(`/learn/${courseCard.id}`)} key={courseCard.id} className="progress">
                 <span className="progress-course-title">{courseCard.title}</span>
                 <div className="progress-stats">
@@ -129,7 +145,7 @@ export default function Index() {
         return (
             <div className="progress-container">
                 <span className="progress-title">My progress</span>
-                {activeCourses.length === 0 && <span className="progress-text">You have no active courses</span>}
+                {activeProgressions.length === 0 && <span className="progress-text">You have no active courses</span>}
                 {progress}
             </div>
         )

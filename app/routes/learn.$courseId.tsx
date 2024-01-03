@@ -11,7 +11,7 @@ import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import styles from "~/styles/learn.css";
 import checkboxStyles from "~/styles/cool-checkbox.css";
 
-import { getProgression, submitTest, setLastViewedSubchapter, setSubchapterCompleted } from "~/fetchers/learn";
+import { getProgression, submitTest, setLastViewedSubchapter, setSubchapterCompleted, finishCourse } from "~/fetchers/learn";
 import { getCourse } from "~/fetchers/course";
 import { requireUserId } from "~/utils/session.server";
 
@@ -96,12 +96,13 @@ export default function Learn() {
         return Math.round((completedSubchapters.length / (lastSubchapterIndex + 1)) * 100);
     }
 
-    function handleFinishCourse() {
+    async function handleFinishCourse() {
         if (getCompletionPercentage() < percentageToComplete) {
-            toggleModal(3000, "You must complete all chapters to finish the course");
+            toggleModal(2000, "You must complete all chapters to finish the course");
             return;
         } else {
-            toggleModal(3000, "Congratulations! You have completed the course!");
+            await finishCourse(userId, course.id);
+            toggleModal(2000, "Congratulations! You have completed the course!");
         }
     }
 

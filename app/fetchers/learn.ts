@@ -32,7 +32,7 @@ export async function setSubchapterCompleted(userId: string, courseId: string, s
 }
 
 export async function finishCourse(userId: string, courseId: string) {
-    const { data } = await client.post("/learn/update-progression", { userId, courseId, isCompleted: true });
+    const { data } = await client.patch("/learn/update-progression", { userId, courseId, isCompleted: true });
     return data;
 }
 
