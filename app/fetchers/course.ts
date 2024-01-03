@@ -1,10 +1,10 @@
 import client from "./client";
-import type { Course, CourseCard, CourseCreateSchema, CourseDemo } from "~/types/course";
+import type { Course, CourseCard, CourseDemo } from "~/types/course";
 
 export async function createCourse(course: {}) {
     try {
-        const { data } = await client.post("/course", course);
-        return data;
+        const response = await client.post("/course", course);
+        return response;
     } catch (error) {
         return null
     }
@@ -30,10 +30,8 @@ export async function getCourseCards(ids?: string[]): Promise<CourseCard[]> {
     }
 }
 
-export async function getCourseDemo(courseId: string, userId: string): Promise<{ preview: CourseDemo, isStudying: boolean }> {
+export async function getCourseDemo(courseId: string, userId: string | null): Promise<{ preview: CourseDemo, isStudying: boolean }> {
     const { data } = await client.get(`/course/demo`, { params: { courseId, userId } });
     console.log(data)
     return data;
 }
-
-

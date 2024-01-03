@@ -74,7 +74,7 @@ export default function Create() {
     const [editableChapterIndex, setEditableChapterIndex] = useState<number>(0);
     const [editableSubChapterIndex, setEditableSubChapterIndex] = useState<number>(0);
 
-    const [courseForm, setCourseForm] = useState<CourseForm>({
+    const defaultCourseForm: CourseForm = {
         title: null,
         tags: [],
         description: null,
@@ -96,10 +96,19 @@ export default function Create() {
                 ],
             }
         ],
-    })
+    }
 
-    const [loadingModalIsOpened, setLoadingModalIsOpened] = useState(true);
+    const [courseForm, setCourseForm] = useState<CourseForm>(defaultCourseForm)
+
+    const [loadingModalIsOpened, setLoadingModalIsOpened] = useState(false);
+    const [loadingModalIsLoading, setLoadingModalIsLoading] = useState(true);
     const [loadingModalText, setLoadingModalText] = useState('');
+
+    const [renameModalIsOpened, setRenameModalIsOpened] = useState(false);
+    const [renameModalText, setRenameModalText] = useState('');
+    const [renaming, setRenaming] = useState<{ chapterIndex: number, subChapterIndex: number | null }>(
+        { chapterIndex: 0, subChapterIndex: null }
+    );
 
     const [addableSelectOptions, setAddableSelectOptions] = useState<Record<number, string>>({});
     const [addableCompareOptions, setAddableCompareOptions] = useState<Record<number, [string, string]>>({});
@@ -116,6 +125,60 @@ export default function Create() {
     const editableSubChapter = courseForm.chapters[editableChapterIndex]?.subChapters[editableSubChapterIndex]
     const [courseInfoExpanded, setCourseInfoExpanded] = useState(true);
 
+    function toggleRenameModal(chapterIndex: number, subChapterIndex: number | null) {
+        if (subChapterIndex !== null) {
+            setRenameModalText(courseForm.chapters[chapterIndex].subChapters[subChapterIndex].title);
+        } else {
+            setRenameModalText(courseForm.chapters[chapterIndex].title);
+        }
+        setRenaming({ chapterIndex, subChapterIndex });
+        setRenameModalIsOpened(!renameModalIsOpened);
+    }
+
+    function renameChapter(chapterIndex: number, newTitle: string) {
+        setCourseForm({
+            ...courseForm,
+            chapters: [
+                ...courseForm.chapters.slice(0, chapterIndex),
+                {
+                    ...courseForm.chapters[chapterIndex],
+                    title: newTitle
+                },
+                ...courseForm.chapters.slice(chapterIndex + 1)
+            ]
+        })
+    }
+
+    function renameSubChapter(chapterIndex: number, subChapterIndex: number, newTitle: string) {
+        setCourseForm({
+            ...courseForm,
+            chapters: [
+                ...courseForm.chapters.slice(0, chapterIndex),
+                {
+                    ...courseForm.chapters[chapterIndex],
+                    subChapters: [
+                        ...courseForm.chapters[chapterIndex].subChapters.slice(0, subChapterIndex),
+                        {
+                            ...courseForm.chapters[chapterIndex].subChapters[subChapterIndex],
+                            title: newTitle
+                        },
+                        ...courseForm.chapters[chapterIndex].subChapters.slice(subChapterIndex + 1)
+                    ]
+                },
+                ...courseForm.chapters.slice(chapterIndex + 1)
+            ]
+        })
+    }
+
+    function handleRename() {
+        if (renaming.subChapterIndex === null) {
+            renameChapter(renaming.chapterIndex, renameModalText);
+        } else {
+            renameSubChapter(renaming.chapterIndex, renaming.subChapterIndex, renameModalText);
+        }
+        toggleRenameModal(0, null);
+    }
+
     function addChapter() {
         setCourseForm({
             ...courseForm,
@@ -129,17 +192,17 @@ export default function Create() {
         })
     }
 
-    function moveChapter(from: number, to: number) {
-        setCourseForm({
-            ...courseForm,
-            chapters: [
-                ...courseForm.chapters.slice(0, from),
-                ...courseForm.chapters.slice(from + 1, to + 1),
-                courseForm.chapters[from],
-                ...courseForm.chapters.slice(to + 1)
-            ]
-        })
-    }
+    // function moveChapter(from: number, to: number) {
+    //     setCourseForm({
+    //         ...courseForm,
+    //         chapters: [
+    //             ...courseForm.chapters.slice(0, from),
+    //             ...courseForm.chapters.slice(from + 1, to + 1),
+    //             courseForm.chapters[from],
+    //             ...courseForm.chapters.slice(to + 1)
+    //         ]
+    //     })
+    // }
 
     function removeChapter(chapterIndex: number) {
         setCourseForm({
@@ -168,21 +231,21 @@ export default function Create() {
         })
     }
 
-    function moveSubChapter(chapterIndex: number, from: number, to: number) {
-        const newSubChapters = courseForm.chapters[chapterIndex].subChapters;
-        [newSubChapters[from], newSubChapters[to]] = [newSubChapters[to], newSubChapters[from]];
-        setCourseForm({
-            ...courseForm,
-            chapters: [
-                ...courseForm.chapters.slice(0, chapterIndex),
-                {
-                    ...courseForm.chapters[chapterIndex],
-                    subChapters: newSubChapters
-                },
-                ...courseForm.chapters.slice(chapterIndex + 1)
-            ]
-        })
-    }
+    // function moveSubChapter(chapterIndex: number, from: number, to: number) {
+    //     const newSubChapters = courseForm.chapters[chapterIndex].subChapters;
+    //     [newSubChapters[from], newSubChapters[to]] = [newSubChapters[to], newSubChapters[from]];
+    //     setCourseForm({
+    //         ...courseForm,
+    //         chapters: [
+    //             ...courseForm.chapters.slice(0, chapterIndex),
+    //             {
+    //                 ...courseForm.chapters[chapterIndex],
+    //                 subChapters: newSubChapters
+    //             },
+    //             ...courseForm.chapters.slice(chapterIndex + 1)
+    //         ]
+    //     })
+    // }
 
     function removeSubChapter(chapterIndex: number, subChapterIndex: number) {
         const newChapters = courseForm.chapters;
@@ -213,15 +276,33 @@ export default function Create() {
                 <div className="navigation-content">
                     {courseForm.chapters.map((chapter, chapterIndex) => (
                         <div key={chapterIndex}>
+
                             <div className="navigation-chapter" onClick={() => toggleChapter(chapterIndex)}>
+
+
                                 {expandedChapterIds.includes(chapterIndex) ? '▼ ' : '▶ '}
                                 {chapter.title}
-                                <svg onClick={() => {
-                                    removeChapter(chapterIndex);
-                                    setExpandedChapterIds(expandedChapterIds.filter(id => id !== chapterIndex)); // TODO: Fix this
-                                }} style={{ cursor: 'pointer' }} xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="30" height="30" viewBox="0 0 128 128">
-                                    <path d="M 49 1 C 47.34 1 46 2.34 46 4 C 46 5.66 47.34 7 49 7 L 79 7 C 80.66 7 82 5.66 82 4 C 82 2.34 80.66 1 79 1 L 49 1 z M 24 15 C 16.83 15 11 20.83 11 28 C 11 35.17 16.83 41 24 41 L 101 41 L 101 104 C 101 113.37 93.37 121 84 121 L 44 121 C 34.63 121 27 113.37 27 104 L 27 52 C 27 50.34 25.66 49 24 49 C 22.34 49 21 50.34 21 52 L 21 104 C 21 116.68 31.32 127 44 127 L 84 127 C 96.68 127 107 116.68 107 104 L 107 40.640625 C 112.72 39.280625 117 34.14 117 28 C 117 20.83 111.17 15 104 15 L 24 15 z M 24 21 L 104 21 C 107.86 21 111 24.14 111 28 C 111 31.86 107.86 35 104 35 L 24 35 C 20.14 35 17 31.86 17 28 C 17 24.14 20.14 21 24 21 z M 50 55 C 48.34 55 47 56.34 47 58 L 47 104 C 47 105.66 48.34 107 50 107 C 51.66 107 53 105.66 53 104 L 53 58 C 53 56.34 51.66 55 50 55 z M 78 55 C 76.34 55 75 56.34 75 58 L 75 104 C 75 105.66 76.34 107 78 107 C 79.66 107 81 105.66 81 104 L 81 58 C 81 56.34 79.66 55 78 55 z"></path>
-                                </svg>
+
+                                <div className="controls-container">
+                                    <svg onClick={(e) => { e.stopPropagation(); toggleRenameModal(chapterIndex, null) }} style={{ cursor: 'pointer' }} fill="#000000" height="30px" width="30px" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 306.637 306.637">
+                                        <g>
+                                            <g>
+                                                <path d="M12.809,238.52L0,306.637l68.118-12.809l184.277-184.277l-55.309-55.309L12.809,238.52z M60.79,279.943l-41.992,7.896
+			l7.896-41.992L197.086,75.455l34.096,34.096L60.79,279.943z"/>
+                                                <path d="M251.329,0l-41.507,41.507l55.308,55.308l41.507-41.507L251.329,0z M231.035,41.507l20.294-20.294l34.095,34.095
+			L265.13,75.602L231.035,41.507z"/>
+                                            </g>
+                                        </g>
+                                    </svg>
+                                    <svg onClick={(e) => {
+                                        e.stopPropagation();
+                                        removeChapter(chapterIndex);
+                                        setExpandedChapterIds(expandedChapterIds.filter(id => id !== chapterIndex)); // TODO: Fix this
+                                    }} style={{ cursor: 'pointer' }} xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="30" height="30" viewBox="0 0 128 128">
+                                        <path d="M 49 1 C 47.34 1 46 2.34 46 4 C 46 5.66 47.34 7 49 7 L 79 7 C 80.66 7 82 5.66 82 4 C 82 2.34 80.66 1 79 1 L 49 1 z M 24 15 C 16.83 15 11 20.83 11 28 C 11 35.17 16.83 41 24 41 L 101 41 L 101 104 C 101 113.37 93.37 121 84 121 L 44 121 C 34.63 121 27 113.37 27 104 L 27 52 C 27 50.34 25.66 49 24 49 C 22.34 49 21 50.34 21 52 L 21 104 C 21 116.68 31.32 127 44 127 L 84 127 C 96.68 127 107 116.68 107 104 L 107 40.640625 C 112.72 39.280625 117 34.14 117 28 C 117 20.83 111.17 15 104 15 L 24 15 z M 24 21 L 104 21 C 107.86 21 111 24.14 111 28 C 111 31.86 107.86 35 104 35 L 24 35 C 20.14 35 17 31.86 17 28 C 17 24.14 20.14 21 24 21 z M 50 55 C 48.34 55 47 56.34 47 58 L 47 104 C 47 105.66 48.34 107 50 107 C 51.66 107 53 105.66 53 104 L 53 58 C 53 56.34 51.66 55 50 55 z M 78 55 C 76.34 55 75 56.34 75 58 L 75 104 C 75 105.66 76.34 107 78 107 C 79.66 107 81 105.66 81 104 L 81 58 C 81 56.34 79.66 55 78 55 z"></path>
+                                    </svg>
+                                </div>
                             </div>
                             <div
                                 className="subchapter-container"
@@ -237,9 +318,22 @@ export default function Create() {
                                         onClick={() => { setEditableChapterIndex(chapterIndex); setEditableSubChapterIndex(subchapterIndex) }}
                                     >
                                         <span className="subchapter-title">{subChapter.title}</span>
-                                        <svg onClick={() => removeSubChapter(chapterIndex, subchapterIndex)} style={{ cursor: 'pointer' }} xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="30" height="30" viewBox="0 0 128 128">
-                                            <path d="M 49 1 C 47.34 1 46 2.34 46 4 C 46 5.66 47.34 7 49 7 L 79 7 C 80.66 7 82 5.66 82 4 C 82 2.34 80.66 1 79 1 L 49 1 z M 24 15 C 16.83 15 11 20.83 11 28 C 11 35.17 16.83 41 24 41 L 101 41 L 101 104 C 101 113.37 93.37 121 84 121 L 44 121 C 34.63 121 27 113.37 27 104 L 27 52 C 27 50.34 25.66 49 24 49 C 22.34 49 21 50.34 21 52 L 21 104 C 21 116.68 31.32 127 44 127 L 84 127 C 96.68 127 107 116.68 107 104 L 107 40.640625 C 112.72 39.280625 117 34.14 117 28 C 117 20.83 111.17 15 104 15 L 24 15 z M 24 21 L 104 21 C 107.86 21 111 24.14 111 28 C 111 31.86 107.86 35 104 35 L 24 35 C 20.14 35 17 31.86 17 28 C 17 24.14 20.14 21 24 21 z M 50 55 C 48.34 55 47 56.34 47 58 L 47 104 C 47 105.66 48.34 107 50 107 C 51.66 107 53 105.66 53 104 L 53 58 C 53 56.34 51.66 55 50 55 z M 78 55 C 76.34 55 75 56.34 75 58 L 75 104 C 75 105.66 76.34 107 78 107 C 79.66 107 81 105.66 81 104 L 81 58 C 81 56.34 79.66 55 78 55 z"></path>
-                                        </svg>
+                                        <div className="controls-container">
+                                            <svg onClick={(e) => { e.stopPropagation(); toggleRenameModal(chapterIndex, subchapterIndex) }} style={{ cursor: 'pointer' }} fill="#000000" height="30px" width="30px" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg"
+                                                viewBox="0 0 306.637 306.637">
+                                                <g>
+                                                    <g>
+                                                        <path d="M12.809,238.52L0,306.637l68.118-12.809l184.277-184.277l-55.309-55.309L12.809,238.52z M60.79,279.943l-41.992,7.896
+			l7.896-41.992L197.086,75.455l34.096,34.096L60.79,279.943z"/>
+                                                        <path d="M251.329,0l-41.507,41.507l55.308,55.308l41.507-41.507L251.329,0z M231.035,41.507l20.294-20.294l34.095,34.095
+			L265.13,75.602L231.035,41.507z"/>
+                                                    </g>
+                                                </g>
+                                            </svg>
+                                            <svg onClick={() => removeSubChapter(chapterIndex, subchapterIndex)} style={{ cursor: 'pointer' }} xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="30" height="30" viewBox="0 0 128 128">
+                                                <path d="M 49 1 C 47.34 1 46 2.34 46 4 C 46 5.66 47.34 7 49 7 L 79 7 C 80.66 7 82 5.66 82 4 C 82 2.34 80.66 1 79 1 L 49 1 z M 24 15 C 16.83 15 11 20.83 11 28 C 11 35.17 16.83 41 24 41 L 101 41 L 101 104 C 101 113.37 93.37 121 84 121 L 44 121 C 34.63 121 27 113.37 27 104 L 27 52 C 27 50.34 25.66 49 24 49 C 22.34 49 21 50.34 21 52 L 21 104 C 21 116.68 31.32 127 44 127 L 84 127 C 96.68 127 107 116.68 107 104 L 107 40.640625 C 112.72 39.280625 117 34.14 117 28 C 117 20.83 111.17 15 104 15 L 24 15 z M 24 21 L 104 21 C 107.86 21 111 24.14 111 28 C 111 31.86 107.86 35 104 35 L 24 35 C 20.14 35 17 31.86 17 28 C 17 24.14 20.14 21 24 21 z M 50 55 C 48.34 55 47 56.34 47 58 L 47 104 C 47 105.66 48.34 107 50 107 C 51.66 107 53 105.66 53 104 L 53 58 C 53 56.34 51.66 55 50 55 z M 78 55 C 76.34 55 75 56.34 75 58 L 75 104 C 75 105.66 76.34 107 78 107 C 79.66 107 81 105.66 81 104 L 81 58 C 81 56.34 79.66 55 78 55 z"></path>
+                                            </svg>
+                                        </div>
                                     </div>
                                 ))}
                                 <div className={"navigation-subchapter"} onClick={() => addSubChapter(chapterIndex)}>
@@ -283,7 +377,6 @@ export default function Create() {
                     }
                 }
                 const newChapters = courseForm.chapters;
-                console.log(newChapters);
                 newChapters[editableChapterIndex].subChapters[editableSubChapterIndex] = newSubChapter;
                 setCourseForm({
                     ...courseForm,
@@ -294,15 +387,16 @@ export default function Create() {
     }
 
     function renderContentEditor() {
-        if (!editableSubChapter) {
-            return <></>;
+        if (!editableSubChapter?.content) {
+            return <>Error</>;
         }
-        const content = editableSubChapter.content;
+        const content: ContentForm = editableSubChapter.content;
 
         function renderInfoEditor(data: InfoForm) {
             const htmlString = data.html || '';
 
             function handleChangeHtmlString(newValue: string) {
+                
                 const newContent = content;
                 newContent.data = {
                     ...newContent.data,
@@ -452,7 +546,6 @@ export default function Create() {
 
                 const newAddableOptionTexts = addableSelectOptions;
                 newAddableOptionTexts[questionIndex] = '';
-                console.log(newAddableOptionTexts);
                 setAddableSelectOptions(newAddableOptionTexts);
             }
 
@@ -540,6 +633,7 @@ export default function Create() {
                     } else {
                         question.answers.push(optionIndex);
                     }
+                    question.answers = question.answers.sort();
                 }
                 content.data = {
                     ...content.data,
@@ -684,12 +778,16 @@ export default function Create() {
             );
         }
 
+        if (!content) {
+            return <>Error occurred</>;
+        }
+
         if (content.type === 'info') {
-            return renderInfoEditor(content.data as Info);
+            return renderInfoEditor(content.data as InfoForm);
         } else if (content.type === 'test') {
             return renderTestEditor(content.data as TestForm);
         } else if (content.type === 'video') {
-            return renderVideoEditor(content.data as Video);
+            return renderVideoEditor(content.data as VideoForm);
         } else {
             return <>Error occurred</>;
         }
@@ -721,8 +819,29 @@ export default function Create() {
         setCourseForm({ ...courseForm, chapters: newChapters })
     }
 
+    function flushForm() {
+        setCourseForm(defaultCourseForm)
+        setAddableCompareOptions([])
+        setAddableSelectOptions([])
+        setEditableTags({
+            language: '',
+            difficulty: '',
+            specification: '',
+        })
+        setLanguageTags([])
+        setDifficultyTags([])
+        setSpecificationTags([])
+    }
+
     async function handleCreateCourse() {
-        console.log(courseForm)
+
+        setLoadingModalText("Creating course...")
+        setLoadingModalIsOpened(true)
+
+        function handleError(error: string) {
+            setLoadingModalIsOpened(false)
+            alert(error)
+        }
 
         const resultingTags: Tag[] = []
         difficultyTags.forEach(tag => {
@@ -745,23 +864,23 @@ export default function Create() {
         })
 
         if (courseForm.title === "" || courseForm.title === null) {
-            alert("Title is required")
+            handleError("Title is required")
             return
         }
         if (courseForm.description === "" || courseForm.description === null) {
-            alert("Description is required")
+            handleError("Description is required")
             return
         }
         if (courseForm.previewHtml === "" || courseForm.previewHtml === null) {
-            alert("Preview HTML is required")
+            handleError("Preview HTML is required")
             return
         }
         if (resultingTags.length === 0) {
-            alert("Tags are required")
+            handleError("Tags are required")
             return
         }
         if (courseForm.chapters.length === 0) {
-            alert("Chapters are required")
+            handleError("Chapters are required")
             return
         }
 
@@ -776,19 +895,19 @@ export default function Create() {
 
             const subChapterForms = chapterForm.subChapters
             if (subChapterForms.length === 0) {
-                alert(`Subchapters are required for chapter ${chapterIndex + 1}`)
+                handleError(`Subchapters are required for chapter ${chapterIndex + 1}`)
                 return
             }
 
             for (const [subChapterIndex, subChapterForm] of subChapterForms.entries()) {
                 const content = { ...subChapterForm.content }
                 if (!content?.data) {
-                    alert(`Content is required for chapter ${chapterIndex + 1} subchapter ${subChapterIndex + 1}`)
+                    handleError(`Content is required for chapter ${chapterIndex + 1} subchapter ${subChapterIndex + 1}`)
                     return
                 }
                 if (content.type === 'info') {
                     if (!content.data.html) {
-                        alert(`Html is required for chapter ${chapterIndex + 1} subchapter ${subChapterIndex + 1}`)
+                        handleError(`Html is required for chapter ${chapterIndex + 1} subchapter ${subChapterIndex + 1}`)
                         return
                     }
                 } else if (content.type === 'test') {
@@ -796,17 +915,17 @@ export default function Create() {
                     for (const [questionIndex, questionForm] of questionForms.entries()) {
 
                         if (!questionForm.question) {
-                            alert(`Question is required for chapter ${chapterIndex + 1} subchapter ${subChapterIndex + 1} question ${questionIndex + 1}`)
+                            handleError(`Question is required for chapter ${chapterIndex + 1} subchapter ${subChapterIndex + 1} question ${questionIndex + 1}`)
                             return
                         } else if (!questionForm.options.length) {
-                            alert(`Options are required for chapter ${chapterIndex + 1} subchapter ${subChapterIndex + 1} question ${questionIndex + 1}`)
+                            handleError(`Options are required for chapter ${chapterIndex + 1} subchapter ${subChapterIndex + 1} question ${questionIndex + 1}`)
                             return
                         }
                         if (questionForm.type === 'compare') {
                             const options = questionForm.options
                             let indexedOptions = options.slice(options.length / 2, options.length).map((option, index) => {
                                 return {
-                                    index: index,
+                                    originalIndex: index,
                                     option: option
                                 }
                             })
@@ -820,20 +939,20 @@ export default function Create() {
                                     const j = Math.floor(Math.random() * (i + 1));
                                     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
                                 }
-                            } while (shuffled.every((val, index) => val.index === indexedOptions[index].index));
+                            } while (shuffled.every((val, index) => val.originalIndex === indexedOptions[index].originalIndex));
 
-                            // Now shuffled is guaranteed to be different from the original indexedOptions
-                            indexedOptions = shuffled;
-
-                            const answers = indexedOptions.map(option => option.index)
+                            const answers: number[] = []
+                            for (const [newIndex, shuffledOption] of shuffled.entries()) {
+                                answers[shuffledOption.originalIndex] = newIndex
+                            }
                             content.data.questions[questionIndex].answers = answers
-                            const newOptions = options.slice(0, options.length / 2).concat(indexedOptions.map(option => option.option))
+                            const newOptions = options.slice(0, options.length / 2).map((option, index) => option).concat(shuffled.map((shuffledOption) => shuffledOption.option))
                             content.data.questions[questionIndex].options = newOptions
                         }
                     }
                 } else if (content.type === 'video') {
                     if (!content.data.file) {
-                        alert(`File is required for chapter ${chapterIndex + 1} subchapter ${subChapterIndex + 1}`)
+                        handleError(`Video is required for chapter ${chapterIndex + 1} subchapter ${subChapterIndex + 1}`)
                         return
                     } else {
                         files.push({
@@ -865,12 +984,15 @@ export default function Create() {
             })
         }
 
-
-        console.log(files)
-        for (const file of files) {
+        for (const [index, file] of files.entries()) {
+            setLoadingModalText(`Uploading video ${index + 1} of ${files.length}`)
             const response = await uploadFile(file.file)
-            console.log(response)
-            formattedChapters[file.chapterIndex].subChapters[file.subChapterIndex].content.data.source = response
+            if (response?.status !== 200) {
+                handleError(`Failed to upload video ${index + 1} of ${files.length}`)
+                setLoadingModalIsOpened(false)
+                return
+            }
+            formattedChapters[file.chapterIndex].subChapters[file.subChapterIndex].content.data.source = response.data
             delete formattedChapters[file.chapterIndex].subChapters[file.subChapterIndex].content.data.file
         }
         const course: CourseCreateSchema = {
@@ -881,8 +1003,19 @@ export default function Create() {
             estimation: 2,
             chapters: formattedChapters
         }
-        console.log(course)
-        await createCourse(course)
+        const response = await createCourse(course)
+        if (response?.status !== 200) {
+            handleError("Failed to create course")
+            setLoadingModalIsOpened(false)
+            return
+        }
+        setLoadingModalIsLoading(false)
+        setLoadingModalText(`Course ${course.title} created!`)
+        setTimeout(() => {
+            setLoadingModalIsOpened(false)
+            flushForm()
+            setLoadingModalIsLoading(true)
+        }, 2000)
     }
 
     return (
@@ -890,8 +1023,25 @@ export default function Create() {
             {loadingModalIsOpened && (
                 <div className="modal-overlay">
                     <div className="modal-loading">
-                        <div className="modal-loading-spinner"></div>
                         <div className="modal-loading-text">{loadingModalText}</div>
+                        {loadingModalIsLoading && <div className="modal-loading-spinner"></div>}
+                    </div>
+                </div>
+            )}
+
+            {renameModalIsOpened && (
+                <div className="modal-overlay">
+                    <div className="modal-rename">
+                        <input
+                            style={{ width: "100%", height: "2em", fontSize: "1.5em" }}
+                            className="modal-rename-input"
+                            value={renameModalText}
+                            onChange={(e) => setRenameModalText(e.target.value)}
+                        />
+                        <div style={{ width: "60%", display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                            <button onClick={handleRename}>Rename</button>
+                            <button onClick={() => toggleRenameModal(0, null)}>Cancel</button>
+                        </div>
                     </div>
                 </div>
             )}
@@ -951,7 +1101,6 @@ export default function Create() {
                                         <button onClick={() => {
                                             const newDifficultyTags = difficultyTags
                                             newDifficultyTags.push(editableTags.difficulty)
-                                            console.log(newDifficultyTags)
                                             setDifficultyTags(newDifficultyTags);
                                             setEditableTags({ ...editableTags, difficulty: "" });
                                         }}>+</button>
@@ -979,7 +1128,6 @@ export default function Create() {
                                         <button onClick={() => {
                                             const newLanguageTags = languageTags
                                             newLanguageTags.push(editableTags.language)
-                                            console.log(newLanguageTags)
                                             setLanguageTags(newLanguageTags);
                                             setEditableTags({ ...editableTags, language: "" });
                                         }}>+</button>

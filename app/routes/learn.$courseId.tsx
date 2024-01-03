@@ -1,27 +1,29 @@
-import {useLoaderData} from "@remix-run/react";
-import type {LoaderFunctionArgs} from "@remix-run/node";
+import { useLoaderData } from "@remix-run/react";
+import type { LoaderFunctionArgs } from "@remix-run/node";
 
-import {useEffect, useState} from "react";
-import type {Course} from "~/types/course";
-import type {Info, Question, Test, Video, SubChapter, Content} from "~/types/chapter";
-import type {CourseProgression} from "~/types/courseProgression";
+import { useEffect, useState } from "react";
+import type { Course } from "~/types/course";
+import type { Info, Question, Test, Video, SubChapter, Content } from "~/types/chapter";
+import type { CourseProgression } from "~/types/courseProgression";
 
-import {DragDropContext, Droppable, Draggable} from "react-beautiful-dnd";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 import styles from "~/styles/learn.css";
 import checkboxStyles from "~/styles/cool-checkbox.css";
 
-import {getProgression, submitTest, setLastViewedSubchapter, setSubchapterCompleted} from "~/fetchers/learn";
-import {getCourse} from "~/fetchers/course";
-import {requireUserId} from "~/utils/session.server";
+import { getProgression, submitTest, setLastViewedSubchapter, setSubchapterCompleted } from "~/fetchers/learn";
+import { getCourse } from "~/fetchers/course";
+import { requireUserId } from "~/utils/session.server";
 
-import useUserWatched from "~/hooks/useUserWacthed";
+import useUserWatched from "~/hooks/useUserWatched";
+
+const percentageToComplete = 100
 
 export function links() {
-    return [{rel: "stylesheet", href: styles}, {rel: "stylesheet", href: checkboxStyles}];
+    return [{ rel: "stylesheet", href: styles }, { rel: "stylesheet", href: checkboxStyles }];
 }
 
-export async function loader({request}: LoaderFunctionArgs): Promise<{
+export async function loader({ request }: LoaderFunctionArgs): Promise<{
     userId: string,
     course: Course,
     progression: CourseProgression
@@ -38,11 +40,11 @@ export async function loader({request}: LoaderFunctionArgs): Promise<{
     }
     const progression = await getProgression(userId, courseId);
 
-    return {userId, course, progression};
+    return { userId, course, progression };
 }
 
 export default function Learn() {
-    const {userId, course, progression} = useLoaderData<typeof loader>();
+    const { userId, course, progression } = useLoaderData<typeof loader>();
 
     const [expandedChapterIds, setExpandedChapterIds] = useState<number[]>([0]);
     const [currentSubChapterId, setCurrentSubChapterId] = useState<number>(progression.lastViewedSubchapter);
@@ -52,35 +54,55 @@ export default function Learn() {
 
     const [testAnswers, setTestAnswers] = useState<Record<number, number[]>>(getEmptyTestAnswers());
     const [transition, setTransition] = useState(false);
+    const [modalIsOpened, setModalIsOpened] = useState(false);
+    const [modalText, setModalText] = useState<string>("");
     const [ref, isVisible] = useUserWatched<HTMLDivElement>();
 
     useEffect(() => {
         if (isVisible) {
             if (currentSubchapter.content.type !== 'test') {
                 handleCompleteSubchapter()
-                    .catch(console.error);
             }
         }
-    }, [isVisible]); // This will only run once because after visibility is true, the observer disconnects
+    }, [isVisible, currentSubchapter]);
 
     async function handleCompleteSubchapter() {
         if (completedSubchapters.includes(currentSubChapterId)) {
             return;
         }
-        console.log('Completing subchapter', currentSubChapterId);
         setCompletedSubchapters([...completedSubchapters, currentSubChapterId]);
         await setSubchapterCompleted(userId, course.id, currentSubChapterId);
     }
 
     async function handleChangeSubChapter(subChapterId: number) {
         setTransition(true); // Begin fade-out
-        // await setLastViewedSubchapter(userId, course.id, subChapterId);
+        await setLastViewedSubchapter(userId, course.id, subChapterId);
         setTimeout(() => {
-            // After fade-out, update the content
+            const newSubchapter = course.chapters.find(chapter => chapter.subChapters.some(subchapter => subchapter.index === subChapterId))?.subChapters.find(subchapter => subchapter.index === subChapterId) as SubChapter;
             setCurrentSubChapterId(subChapterId);
-            // Begin fade-in after content is updated
             setTransition(false);
         }, 400); // Ensure this matches the duration of the opacity transition
+    }
+
+    function toggleModal(time: number, text: string) {
+        setModalIsOpened(true);
+        setModalText(text);
+        setTimeout(() => {
+            setModalIsOpened(false);
+        }, time);
+    }
+
+    function getCompletionPercentage() {
+        return Math.round((completedSubchapters.length / (lastSubchapterIndex + 1)) * 100);
+    }
+
+    function handleFinishCourse() {
+        if (getCompletionPercentage() < percentageToComplete) {
+            toggleModal(3000, "You must complete all chapters to finish the course");
+            return;
+        } else {
+            toggleModal(3000, "Congratulations! You have completed the course!");
+        }
     }
 
     function getEmptyTestAnswers() {
@@ -118,6 +140,7 @@ export default function Learn() {
             <div className="navigation">
                 <div className="navigation-header">
                     <span>Navigation</span>
+                    <span>{getCompletionPercentage()}%</span>
                 </div>
                 <div className="navigation-content">
                     {course.chapters.map(chapter => (
@@ -135,8 +158,8 @@ export default function Learn() {
                             >
                                 {chapter.subChapters.map(subChapter => (
                                     <div key={subChapter.index}
-                                         className={"navigation-subchapter" + (currentSubChapterId === subChapter.index ? " active" : "")}
-                                         onClick={() => handleChangeSubChapter(subChapter.index)}>
+                                        className={"navigation-subchapter" + (currentSubChapterId === subChapter.index ? " active" : "")}
+                                        onClick={() => handleChangeSubChapter(subChapter.index)}>
                                         <span className="subchapter-title">{subChapter.title}</span>
                                         {completedSubchapters.includes(subChapter.index) ? '✓' : ''}
                                     </div>
@@ -145,7 +168,16 @@ export default function Learn() {
                         </div>
                     ))}
                 </div>
-            </div>
+                <div className="navigation-footer">
+                    {progression.isCompleted ? (
+                        <div>
+                            <span className="course-finish-text">Course Completed</span>
+                        </div>
+                    ) : (
+                        <button onClick={handleFinishCourse} style={{ backgroundColor: getCompletionPercentage() > 99 ? '#e88080' : 'rgb(210, 210, 210)' }} className="course-finish">Finish Course</button>
+                    )}
+                </div>
+            </div >
         );
     }
 
@@ -154,13 +186,27 @@ export default function Learn() {
         function renderInfo(data: Info) {
             const htmlString = data.html;
             if (htmlString) {
-                return <div className="learn-info" dangerouslySetInnerHTML={{__html: htmlString}}/>;
+                return <div className="learn-info" dangerouslySetInnerHTML={{ __html: htmlString }} />;
             }
         }
 
         function renderTest(data: Test) {
 
             const questions = data.questions;
+            
+
+            async function handleSubmitTest() {
+                const answers = Object.values(testAnswers);
+                const data = await submitTest(course.id, currentSubChapterId, answers);
+                const answeredCorrectly = data.answeredCorrectly;
+                if (answeredCorrectly.length === questions.length) {
+                    toggleModal(3000, "Congratulations! You have completed the test!");
+                    await setSubchapterCompleted(userId, course.id, currentSubChapterId);
+                    setCompletedSubchapters([...completedSubchapters, currentSubChapterId]);
+                } else {
+                    toggleModal(3000, "Sorry, you have not completed the test");
+                }
+            }
 
             function handleChangeSelectOneAnswer(questionIndex: number, optionIndex: number) {
                 setTestAnswers((prevAnswers) => {
@@ -181,7 +227,7 @@ export default function Learn() {
                 setTestAnswers((prevAnswers) => {
                     return {
                         ...prevAnswers,
-                        [questionIndex]: newAnswers
+                        [questionIndex]: newAnswers.sort()
                     };
                 })
             }
@@ -213,7 +259,7 @@ export default function Learn() {
                                         questionType === 'select-one' ?
                                             handleChangeSelectOneAnswer(questionIndex, index) :
                                             handleChangeSelectManyAnswer(questionIndex, index)
-                                    }} checked={answers.includes(index)} type="checkbox"/>
+                                    }} checked={answers.includes(index)} type="checkbox" />
                                     <div className="checkbox__checkmark"></div>
                                     <div className="checkbox__body">{option}</div>
                                 </label>
@@ -226,13 +272,11 @@ export default function Learn() {
                 else if (questionType === 'compare') {
                     const firstOptionsSet = options.slice(0, options.length / 2);
                     const secondOptionsSet = options.slice(options.length / 2);
-                    console.log(testAnswers)
-                    const answers = testAnswers[questionIndex];
+
 
                     function handleOnDragEnd(result) {
                         const fromId = result.source.index;
                         const toId = result.destination.index;
-                        console.log(fromId, toId);
                         handleChangeCompareAnswer(questionIndex, fromId, toId);
                     }
 
@@ -241,8 +285,8 @@ export default function Learn() {
                             <DragDropContext onDragEnd={handleOnDragEnd}>
                                 <div className="compare">
                                     <div className="compare-set">
-                                        {firstOptionsSet.map((item, index) => (
-                                            <div className="compare-option static" key={index}>
+                                        {firstOptionsSet.map((item, staticIndex) => (
+                                            <div className="compare-option static" key={staticIndex}>
                                                 {item}
                                             </div>
                                         ))}
@@ -254,14 +298,14 @@ export default function Learn() {
                                             </div>
                                         ))}
                                     </div>
-                                    <Droppable droppableId={`answers-${questionIndex}`}>
+                                    <Droppable droppableId={`answers-${currentSubChapterId}-${questionIndex}`}>
                                         {(provided) => (
                                             <div className="compare-set" {...provided.droppableProps}
-                                                 ref={provided.innerRef}>
-                                                {answers.map((item, index) => (
-                                                    <Draggable key={item}
-                                                               draggableId={`draggable-${questionIndex}-${item}`}
-                                                               index={index}>
+                                                ref={provided.innerRef}>
+                                                {answers.map((item, answerIndex) => (
+                                                    <Draggable key={answerIndex}
+                                                        draggableId={`draggable-${questionIndex}-${answerIndex}`}
+                                                        index={answerIndex}>
                                                         {(provided) => (
                                                             <div
                                                                 className="compare-option"
@@ -272,6 +316,7 @@ export default function Learn() {
                                                                 {secondOptionsSet[item]}
                                                             </div>
                                                         )}
+
                                                     </Draggable>
                                                 ))}
                                                 {provided.placeholder}
@@ -298,9 +343,7 @@ export default function Learn() {
                 <div className="learn-test">
                     {questions.map((question, index) => (renderQuestion(question, index)))}
                     <div className="test-submit">
-                        <button className="test-submit-button" onClick={() => {
-                            alert(JSON.stringify(testAnswers));
-                        }}>Submit
+                        <button className="test-submit-button" onClick={handleSubmitTest}>Submit
                         </button>
                     </div>
                 </div>
@@ -309,8 +352,8 @@ export default function Learn() {
 
         function renderVideo(data: Video) {
             return <div className="learn-video">
-                <video style={{width: '100%'}} controls>
-                    <source src={`http://localhost:8080/file/?id=${data.source}`} type="video/mp4"/>
+                <video style={{ width: '100%' }} controls>
+                    <source src={`http://localhost:8080/file/?id=${data.source}`} type="video/mp4" />
                     Your browser does not support the video tag.
                 </video>
             </div>;
@@ -330,6 +373,14 @@ export default function Learn() {
 
     return (
         <>
+            {modalIsOpened && (
+                <div onClick={() => setModalIsOpened(false)} className="modal-overlay">
+                    <div className="modal-window">
+                        <div className="modal-text">{modalText}</div>
+                    </div>
+                </div>
+            )}
+
             <div className="course-header">
                 <span className="course-title">{course.title}</span>
             </div>
@@ -356,8 +407,9 @@ export default function Learn() {
                                     }}>NEXT</span>}
                             </div>
                         </div>
-                        <div ref={ref}>
-                        </div>
+
+                    </div>
+                    <div style={{ height: '1px' }} ref={ref}>
                     </div>
                 </div>
             </div>

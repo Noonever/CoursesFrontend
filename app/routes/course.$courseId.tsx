@@ -5,20 +5,20 @@ import type { CourseDemo } from "~/types/course";
 import { getCourseDemo } from "~/fetchers/course";
 
 import styles from "~/styles/course-demo.css";
-import { requireUserId } from "~/utils/session.server";
+import { getUserId, requireUserId } from "~/utils/session.server";
 import { leaveCourse, signUpForCourse } from "~/fetchers/learn";
 
 export function links() {
     return [{ rel: "stylesheet", href: styles }];
 }
 
-export async function loader({request}: LoaderFunctionArgs): Promise<{userId: string, courseDemo: CourseDemo, isStudying: boolean}> {
-    const userId = await requireUserId(request)
+export async function loader({request}: LoaderFunctionArgs): Promise<{userId: string | undefined, courseDemo: CourseDemo, isStudying: boolean}> {
+    const userId = await getUserId(request);
     const courseId = request.url.split('/').pop();
     if (!courseId) {
         throw new Error("Course ID is required")
     }
-    const { preview, isStudying} = await getCourseDemo(courseId, userId);
+    const { preview, isStudying} = await getCourseDemo(courseId, userId || null);
     console.log(preview)
     return {userId, courseDemo: preview, isStudying};
 }
@@ -29,14 +29,20 @@ export default function Course() {
     const revalidator = useRevalidator();
 
     async function handleLearnClick() {
-        if (!isStudying) {
+        if (!userId) {
+            alert("Please sign in first");
+            return
+        }
+        if (!isStudying ) {
             await signUpForCourse(userId, courseDemo.id);
         }
         return navigate("/learn/" + courseDemo.id);
     }
 
     async function handleExcludeClick() {
-        await leaveCourse(userId, courseDemo.id);
+        if (userId) {
+            await leaveCourse(userId, courseDemo.id);
+        }
         revalidator.revalidate();
     }
 

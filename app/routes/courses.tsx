@@ -10,7 +10,7 @@ import { getCourseCards } from "~/fetchers/course";
 import styles from "~/styles/courses.css";
 import courseHeader1 from "~/media/img/zeros-ones.jpg";
 import courseHeader2 from "~/media/img/zeros-ones-2.jpg";
-import { requireUserId } from "~/utils/session.server";
+import { getUser, requireUserId } from "~/utils/session.server";
 import { getUserById } from "~/fetchers/user";
 import { User } from "~/types/user";
 
@@ -19,11 +19,10 @@ export const links: LinksFunction = () => {
     return [{ rel: "stylesheet", href: styles }];
 }
 
-export async function loader({ request }: LoaderFunctionArgs): Promise<{ courseCards: CourseCard[], groupedTags: Record<string, string[]>, user: User }> {
+export async function loader({ request }: LoaderFunctionArgs): Promise<{ courseCards: CourseCard[], groupedTags: Record<string, string[]>, user: User | null }> {
     const groupedTags: Record<string, string[]> = {};
     const courseCards = await getCourseCards();
-    const userId = await requireUserId(request);
-    const user = await getUserById(userId);
+    const user = await getUser(request);
 
     courseCards.forEach(courseCard => {
         courseCard.tags.forEach(tag => {
@@ -149,7 +148,7 @@ export default function Courses() {
         <>
             <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                 <span className="section-title">Courses</span>
-                {user.isAdmin && <button className="create-course-button" onClick={() => navigate("/create")}>Create Course</button>}
+                {user?.isAdmin && <button className="create-course-button" onClick={() => navigate("/create")}>Create Course</button>}
             </div>
             <div className="search">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className="">

@@ -58,6 +58,10 @@
 
 .progress-container {
     width: calc(30% - 30px);
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    gap: 10px;
 }
 
 .progress-title {
@@ -71,6 +75,37 @@
     padding: 10px;
     box-shadow: 4px 4px 25px 9px rgba(34, 60, 80, 0.2);
     margin-top: 10px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+}
+
+.progress-stats {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: center;
+    height: 3vh;
+    min-height: max-content;
+    width: 50%;
+}
+
+.progress-bar-container {
+    background-color: rgb(212, 212, 212);
+    height: 30%;
+    border-radius: 100px;
+    overflow: hidden;
+    width: 70%;
+    box-shadow: 4px 4px 25px 9px rgba(34, 60, 80, 0.064);
+}
+
+.progress-bar {
+    background-color: rgb(255, 120, 108);
+    border-radius: 100px;
+    height: 100%;
 }
 
 div .recommended {
@@ -81,3 +116,5 @@ div .recommended {
     font-size: 30px;
     font-weight: 500;
 }
+
+

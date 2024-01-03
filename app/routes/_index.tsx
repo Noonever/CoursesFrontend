@@ -7,19 +7,40 @@ import courseHeader1 from "~/media/img/zeros-ones.jpg";
 import courseHeader2 from "~/media/img/zeros-ones-2.jpg";
 import type { CourseCard } from "~/types/course";
 import { getCourseCards } from "~/fetchers/course";
+import type { LoaderFunctionArgs } from "@remix-run/node";
+import { getUser, requireUserId } from "~/utils/session.server";
+import { getProgressions } from "~/fetchers/learn";
 
 export function links() {
     return [{ rel: "stylesheet", href: styles }, { rel: "stylesheet", href: coursesStyles }];
 }
 
-export async function loader(): Promise<{ courseCards: CourseCard[]}> {
+export async function loader({ request }: LoaderFunctionArgs): Promise<{
+    courseCards: CourseCard[],
+    activeCourses: { courseCard: CourseCard, percentage: number }[],
+}> {
     const courseCards = await getCourseCards();
-    return { courseCards };
+    const user = await getUser(request);
+    if (!user) {
+        return { courseCards, activeCourses: [] };
+    }
+    const courseProgressions = await getProgressions(user.id);
+    if (courseProgressions.length === 0) {
+        return { courseCards, activeCourses: [] };
+    }
+    const userCoursesIds = courseProgressions.map((progression) => progression.courseId);
+    const userCourseCards = await getCourseCards(userCoursesIds);
+    const mergedActiveData = userCourseCards.map(courseCard => {
+        const progression = courseProgressions.find(progression => progression.courseId === courseCard.id);
+        const percentage = progression ? Math.round((progression.completedSubchapters.length / courseCard.totalSubchapters) * 100) : 0;
+        return { courseCard, percentage };
+    });
+    return { courseCards, activeCourses: mergedActiveData };
 }
 
 export default function Index() {
     const navigate = useNavigate();
-    const { courseCards } = useLoaderData<typeof loader>();
+    const { courseCards, activeCourses } = useLoaderData<typeof loader>();
 
     function splitCourseCardsIntoRows(courseCards: CourseCard[], rowSize: number) {
         const result = [];
@@ -31,10 +52,10 @@ export default function Index() {
     }
 
     function getRandomElements(arr: any[], count: number) {
-        if(!arr.length){
+        if (!arr.length) {
             return [];
         }
-        if(arr.length <= count) return arr;
+        if (arr.length <= count) return arr;
         let shuffled = arr.slice(0), i = arr.length, min = i - count, temp, index;
         while (i-- > min) {
             index = Math.floor((i + 1) * Math.random());
@@ -81,12 +102,35 @@ export default function Index() {
         return (
             <div className="course-cards-container" style={{ width: "100%", marginTop: "20px" }}>
                 {chunkedCourseCards.map((chunk, index) => (
-                    <div className="course-cards-row" style={{ justifyContent: "space-between" }} key={index}>
+                    <div className="course-cards-row" style={{ width: "100%" }} key={index}>
                         {chunk.map((courseCard, index) => (
                             renderCourseCard(courseCard, index)
                         ))}
                     </div>
                 ))}
+            </div>
+        )
+    }
+
+    function renderProgress() {
+
+        const progress = activeCourses.slice(0, 5).map(({ courseCard, percentage }) => (
+            <div onClick={() => navigate(`/learn/${courseCard.id}`)} key={courseCard.id} className="progress">
+                <span className="progress-course-title">{courseCard.title}</span>
+                <div className="progress-stats">
+                    <span className="progress-text">{percentage}%</span>
+                    <div className="progress-bar-container">
+                        <div className="progress-bar" style={{ width: `${percentage}%` }}></div>
+                    </div>
+                </div>
+            </div>
+        ))
+
+        return (
+            <div className="progress-container">
+                <span className="progress-title">My progress</span>
+                {activeCourses.length === 0 && <span className="progress-text">You have no active courses</span>}
+                {progress}
             </div>
         )
     }
@@ -108,12 +152,7 @@ export default function Index() {
                         <img className="bg" src={mainBackground} alt="qwe" />
                     </div>
                 </div>
-                <div className="progress-container">
-                    <span className="progress-title">My progress</span>
-                    <div className="progress">
-                        <span className="progress-course-title">Course 1</span>
-                    </div>
-                </div>
+                {renderProgress()}
             </div>
             <div className="search" style={{ cursor: "pointer" }} onClick={() => navigate("/courses")}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className="">
@@ -122,11 +161,11 @@ export default function Index() {
                 <input style={{ cursor: "pointer" }} className="search" type="text" placeholder="Search courses, materials and more" />
             </div>
             <div className="recommended">
-                <span className="main-title">Recommended by Vladislav</span>
+                <span className="main-title">Recommended courses</span>
                 {renderCourseCardsRow()}
             </div>
             <div className="recommended">
-                <span className="main-title">Recommended by Ilya</span>
+                <span className="main-title">Top courses of the week</span>
                 {renderCourseCardsRow()}
             </div>
         </>

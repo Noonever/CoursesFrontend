@@ -31,7 +31,12 @@ export async function setSubchapterCompleted(userId: string, courseId: string, s
     return data;
 }
 
-export async function submitTest(courseId: string, subChapterId: number, answers: number[]): Promise<boolean> {
-    const { data } = await client.post("/learn/submit-test", { courseId, subChapterId, answers });
-    return data.result;
+export async function finishCourse(userId: string, courseId: string) {
+    const { data } = await client.post("/learn/update-progression", { userId, courseId, isCompleted: true });
+    return data;
+}
+
+export async function submitTest(courseId: string, subchapterId: number, answers: number[][]) {
+    const { data } = await client.post("/learn/submit-test", { courseId, subchapterId, answers });
+    return data;
 }

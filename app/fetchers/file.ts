@@ -5,12 +5,13 @@ export async function uploadFile(file: File) {
         let formData = new FormData();
         formData.append("file", file);
         console.log(file)
-        const { data } = await client.post("/file", formData, {
+        const response = await client.post("/file", formData, {
             headers: {
                 "Content-Type": "multipart/form-data",
             },
+            timeout: 120000
         });
-        return data;
+        return response;
     } catch (error) {
         return null
     }

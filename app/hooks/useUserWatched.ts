@@ -23,7 +23,9 @@ function useUserWatched<T extends Element>(): [React.RefObject<T>, boolean] {
     }
 
     return () => {
+
       if (currentElement) {
+        setIsVisible(false);
         observer.unobserve(currentElement);
       }
     };
