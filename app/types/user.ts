@@ -5,4 +5,5 @@ export interface User {
     lastName: string;
     imageUrl: string;
     isAdmin: boolean;
+    bossId?: string;
 }

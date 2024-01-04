@@ -1,9 +1,14 @@
 import client from "./client";
 import type { CourseProgression } from "~/types/courseProgression";
 
-export async function signUpForCourse(userId: string, courseId: string) {
-    const { data } = await client.post("/learn/sign-up", { userId, courseId });
+export async function signUpForCourse(userId: string, courseId: string, assignedBy?: string | null) {
+    const { data } = await client.post("/learn/sign-up", { userId, courseId, assignedBy });
     return data;
+}
+
+export async function getAssignedProgressions(courseId: string, assignedBy: string) {
+    const { data } = await client.get("/learn/assigned", { params: { courseId, assignedBy } });
+    return data.items;
 }
 
 export async function leaveCourse(userId: string, courseId: string) {

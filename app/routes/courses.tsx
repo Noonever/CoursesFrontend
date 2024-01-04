@@ -10,9 +10,8 @@ import { getCourseCards } from "~/fetchers/course";
 import styles from "~/styles/courses.css";
 import courseHeader1 from "~/media/img/zeros-ones.jpg";
 import courseHeader2 from "~/media/img/zeros-ones-2.jpg";
-import { getUser, requireUserId } from "~/utils/session.server";
-import { getUserById } from "~/fetchers/user";
-import { User } from "~/types/user";
+import { getUser } from "~/utils/session.server";
+import type { User } from "~/types/user";
 
 
 export const links: LinksFunction = () => {

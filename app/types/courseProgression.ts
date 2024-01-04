@@ -5,4 +5,5 @@ export interface CourseProgression {
     completedSubchapters: number[];
     isCompleted: boolean;
     isArchived: boolean;
+    assignedBy: string | null;
 }
