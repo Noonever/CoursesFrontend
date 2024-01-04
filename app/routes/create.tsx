@@ -838,6 +838,7 @@ export default function Create() {
         setLoadingModalText("Creating course...")
         setLoadingModalIsOpened(true)
 
+
         function handleError(error: string) {
             setLoadingModalIsOpened(false)
             alert(error)
@@ -886,7 +887,7 @@ export default function Create() {
 
         const formattedChapters: Chapter[] = []
         const files: { chapterIndex: number, subChapterIndex: number, file: File }[] = []
-
+        const emptyTestAnswers: Record<string, number[][]> = {}
 
         let totalSubChapterIndex = 0
         for (const [chapterIndex, chapterForm] of courseForm.chapters.entries()) {
@@ -912,6 +913,7 @@ export default function Create() {
                     }
                 } else if (content.type === 'test') {
                     const questionForms = content.data.questions as QuestionForm[]
+                    emptyTestAnswers[totalSubChapterIndex] = new Array(questionForms.length)
                     for (const [questionIndex, questionForm] of questionForms.entries()) {
 
                         if (!questionForm.question) {
@@ -948,7 +950,13 @@ export default function Create() {
                             content.data.questions[questionIndex].answers = answers
                             const newOptions = options.slice(0, options.length / 2).map((option, index) => option).concat(shuffled.map((shuffledOption) => shuffledOption.option))
                             content.data.questions[questionIndex].options = newOptions
-                        }
+                            function range(start, end) {
+                                return Array.from({ length: end - start + 1 }, (v, k) => k + start);
+                            }
+                            emptyTestAnswers[`${totalSubChapterIndex}`][questionIndex] = range(0, answers.length - 1)
+                        } else if (questionForm.type === 'select-one' || 'select-many') {
+                            emptyTestAnswers[`${totalSubChapterIndex}`][questionIndex] = []
+                        } 
                     }
                 } else if (content.type === 'video') {
                     if (!content.data.file) {
@@ -1001,7 +1009,8 @@ export default function Create() {
             description: courseForm.description,
             previewHtml: courseForm.previewHtml,
             estimation: 2,
-            chapters: formattedChapters
+            chapters: formattedChapters,
+            emptyTestAnswers: emptyTestAnswers
         }
         const response = await createCourse(course)
         if (response?.status !== 200) {

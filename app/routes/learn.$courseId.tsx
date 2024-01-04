@@ -1,4 +1,4 @@
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, useRevalidator } from "@remix-run/react";
 import type { LoaderFunctionArgs } from "@remix-run/node";
 
 import { useEffect, useState } from "react";
@@ -45,6 +45,7 @@ export async function loader({ request }: LoaderFunctionArgs): Promise<{
 
 export default function Learn() {
     const { userId, course, progression } = useLoaderData<typeof loader>();
+    const revalidator = useRevalidator();
 
     const [expandedChapterIds, setExpandedChapterIds] = useState<number[]>([0]);
     const [currentSubChapterId, setCurrentSubChapterId] = useState<number>(progression.lastViewedSubchapter);
@@ -52,7 +53,7 @@ export default function Learn() {
     const [completedSubchapters, setCompletedSubchapters] = useState<number[]>(progression.completedSubchapters);
     const lastSubchapterIndex = course.chapters[course.chapters.length - 1].subChapters[course.chapters[course.chapters.length - 1].subChapters.length - 1].index;
 
-    const [testAnswers, setTestAnswers] = useState<Record<number, number[]>>(getEmptyTestAnswers());
+    const [testAnswers, setTestAnswers] = useState<Record<number, number[]>>(getEmptyTestAnswers(currentSubChapterId));
     const [transition, setTransition] = useState(false);
     const [modalIsOpened, setModalIsOpened] = useState(false);
     const [modalText, setModalText] = useState<string>("");
@@ -78,7 +79,7 @@ export default function Learn() {
         setTransition(true); // Begin fade-out
         await setLastViewedSubchapter(userId, course.id, subChapterId);
         setTimeout(() => {
-            const newSubchapter = course.chapters.find(chapter => chapter.subChapters.some(subchapter => subchapter.index === subChapterId))?.subChapters.find(subchapter => subchapter.index === subChapterId) as SubChapter;
+            setTestAnswers(getEmptyTestAnswers(subChapterId));
             setCurrentSubChapterId(subChapterId);
             setTransition(false);
         }, 400); // Ensure this matches the duration of the opacity transition
@@ -103,28 +104,12 @@ export default function Learn() {
         } else {
             await finishCourse(userId, course.id);
             toggleModal(2000, "Congratulations! You have completed the course!");
+            revalidator.revalidate();
         }
     }
 
-    function getEmptyTestAnswers() {
-        const test = currentSubchapter.content.data as Test;
-        const testLength = test.questions?.length ?? 0;
-        const emptyTestAnswers: Record<number, number[]> = {};
-        for (let i = 0; i < testLength; i++) {
-            const questionType = test.questions[i].type;
-            if (questionType === 'select-one') {
-                emptyTestAnswers[i] = [0];
-            }
-            if (questionType === 'select-many') {
-                emptyTestAnswers[i] = [];
-            }
-            if (questionType === 'compare') {
-                const optionsLength = test.questions[i].options.length / 2;
-                const optionsIds = [...Array(optionsLength).keys()];
-                emptyTestAnswers[i] = optionsIds;
-            }
-        }
-        return emptyTestAnswers;
+    function getEmptyTestAnswers(subChapterId: number) {
+        return course.emptyTestAnswers[subChapterId];
     }
 
     function renderNavigation() {

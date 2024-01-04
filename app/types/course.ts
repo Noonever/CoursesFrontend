@@ -23,6 +23,7 @@ export interface CourseDemo extends CourseBase {
 
 export interface Course extends CourseBase {
     chapters: Chapter[];
+    emptyTestAnswers: Record<string, number[][]>;
 }
 
 export interface CourseCreateSchema {
@@ -32,4 +33,5 @@ export interface CourseCreateSchema {
     previewHtml: string;
     estimation: number;
     chapters: Chapter[];
+    emptyTestAnswers: Record<string, number[][]>
 }
